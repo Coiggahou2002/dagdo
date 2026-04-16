@@ -1,4 +1,4 @@
-# todo-dag — 基于 DAG 的 CLI TODO 管理工具
+# depdo — 基于 DAG 的 CLI TODO 管理工具
 
 ## Context
 
@@ -7,29 +7,29 @@
 ## 项目结构
 
 ```
-todo-dag/
+depdo/
 ├── package.json
 ├── tsconfig.json
 ├── src/
 │   ├── cli.ts              # 入口，解析 argv，分发到子命令
 │   ├── types.ts            # 类型定义
 │   ├── ids.ts              # 短 ID 生成 + 前缀匹配
-│   ├── storage.ts          # 读写 ~/.todo-dag/data.json
+│   ├── storage.ts          # 读写 ~/.depdo/data.json
 │   ├── format.ts           # 终端输出格式化（颜色、表格）
 │   ├── graph/
 │   │   ├── dag.ts          # DAG 操作：邻接表构建、环检测
 │   │   ├── topo.ts         # 拓扑排序、入度为 0 查询
 │   │   └── render.ts       # ASCII 渲染 DAG
 │   └── commands/
-│       ├── add.ts          # todo-dag add
-│       ├── remove.ts       # todo-dag rm
-│       ├── edit.ts         # todo-dag edit
-│       ├── list.ts         # todo-dag list / ls
-│       ├── done.ts         # todo-dag done
-│       ├── next.ts         # todo-dag next
-│       ├── link.ts         # todo-dag link（加依赖边）
-│       ├── unlink.ts       # todo-dag unlink（删依赖边）
-│       └── graph.ts        # todo-dag graph（可视化）
+│       ├── add.ts          # depdo add
+│       ├── remove.ts       # depdo rm
+│       ├── edit.ts         # depdo edit
+│       ├── list.ts         # depdo list / ls
+│       ├── done.ts         # depdo done
+│       ├── next.ts         # depdo next
+│       ├── link.ts         # depdo link（加依赖边）
+│       ├── unlink.ts       # depdo unlink（删依赖边）
+│       └── graph.ts        # depdo graph（可视化）
 ├── tests/
 │   ├── dag.test.ts
 │   ├── topo.test.ts
@@ -63,21 +63,21 @@ interface GraphData {
 }
 ```
 
-存储位置：`~/.todo-dag/data.json`，平铺的 JSON，人类可读。
+存储位置：`~/.depdo/data.json`，平铺的 JSON，人类可读。
 
 ## CLI 命令设计
 
 | 命令 | 用途 | 示例 |
 |------|------|------|
-| `add <title> [--priority high\|med\|low] [--tag <t>] [--after <id>] [--before <id>]` | 添加任务 | `todo-dag add "设计 API" --priority high --tag backend` |
-| `rm <id> [--force]` | 删除任务及相关边 | `todo-dag rm a3f` |
-| `edit <id> [--title] [--priority] [--tag] [--untag]` | 修改任务 | `todo-dag edit a3f --priority low` |
-| `list [--all\|--done] [--tag <t>]` | 列出任务 | `todo-dag list --tag work` |
-| `done <id> [--force]` | 标记完成，打印新解锁的任务 | `todo-dag done a3f` |
-| `next [--limit <n>]` | 显示入度为 0 的任务（可以做的） | `todo-dag next` |
-| `link <from> <to>` | 加依赖边，带环检测 | `todo-dag link a3f c7e` |
-| `unlink <from> <to>` | 删依赖边 | `todo-dag unlink a3f c7e` |
-| `graph [--all]` | ASCII 可视化 DAG | `todo-dag graph` |
+| `add <title> [--priority high\|med\|low] [--tag <t>] [--after <id>] [--before <id>]` | 添加任务 | `depdo add "设计 API" --priority high --tag backend` |
+| `rm <id> [--force]` | 删除任务及相关边 | `depdo rm a3f` |
+| `edit <id> [--title] [--priority] [--tag] [--untag]` | 修改任务 | `depdo edit a3f --priority low` |
+| `list [--all\|--done] [--tag <t>]` | 列出任务 | `depdo list --tag work` |
+| `done <id> [--force]` | 标记完成，打印新解锁的任务 | `depdo done a3f` |
+| `next [--limit <n>]` | 显示入度为 0 的任务（可以做的） | `depdo next` |
+| `link <from> <to>` | 加依赖边，带环检测 | `depdo link a3f c7e` |
+| `unlink <from> <to>` | 删依赖边 | `depdo unlink a3f c7e` |
+| `graph [--all]` | ASCII 可视化 DAG | `depdo graph` |
 
 ID 支持前缀匹配：输入 `a3f` 即可，不需要完整 ID。
 
@@ -142,5 +142,5 @@ bun test
 
 # 编译
 bash scripts/build.sh
-./todo-dag next
+./depdo next
 ```
