@@ -2,7 +2,7 @@
 
 Dependency-aware todo manager. Tasks form a DAG (directed acyclic graph) — topological sort tells you what to do next.
 
-![depdo graph](docs/hero.png)
+![depdo graph](docs/hero.svg)
 
 Most todo apps treat tasks as a flat list. Real work has dependencies: you can't deploy before tests pass, can't test before the API is built. **depdo** models your tasks as a graph and always tells you which tasks are ready to work on right now (zero in-degree nodes).
 

@@ -15,6 +15,7 @@ dist
 # generated images
 *.png
 *.svg
+!docs/hero.svg
 
 # code coverage
 coverage

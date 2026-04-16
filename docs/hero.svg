@@ -1,0 +1,78 @@
+<svg width="640" height="380" viewBox="0 0 640 380"
+  xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <filter id="shadow" x="-15%" y="-15%" width="130%" height="130%">
+    <feDropShadow dx="0" dy="1" stdDeviation="2.5" flood-color="#0F172A" flood-opacity="0.07"/>
+  </filter>
+  <marker id="ah" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto">
+    <polygon points="0 0,9 3.5,0 7" fill="#94A3B8"/>
+  </marker>
+  <marker id="ah-done" markerWidth="10" markerHeight="7" refX="8" refY="3.5" orient="auto">
+    <polygon points="0 0,9 3.5,0 7" fill="#D1D5DB"/>
+  </marker>
+</defs>
+
+<!-- Background -->
+<rect width="640" height="380" fill="white"/>
+
+<!-- ── Edges ── -->
+<line x1="320" y1="98" x2="167.2610163262345" y2="168.64177994911654"
+    stroke="#D1D5DB" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#ah-done)"/>
+<line x1="320" y1="98" x2="472.73898367376546" y2="168.64177994911654"
+    stroke="#D1D5DB" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#ah-done)"/>
+<line x1="160" y1="230" x2="312.6044911912166" y2="292.9493526163768"
+    stroke="#94A3B8" stroke-width="1.5"  marker-end="url(#ah)"/>
+<line x1="480" y1="230" x2="327.3955088087834" y2="292.9493526163768"
+    stroke="#94A3B8" stroke-width="1.5"  marker-end="url(#ah)"/>
+
+<!-- ── N1: Design schema (done) ── -->
+<rect x="227.5" y="40" width="185" height="58" rx="10"
+    fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="5 3"
+    filter="url(#shadow)"/>
+
+  <text x="320" y="61" text-anchor="middle"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-size="13.5" font-weight="600" fill="#94A3B8">✓  Design schema</text>
+  <text x="320" y="81" text-anchor="middle"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-size="11" fill="#94A3B8">backend  ·  done</text>
+
+<!-- ── N2: Implement API (high) ── -->
+<rect x="67.5" y="172" width="185" height="58" rx="10"
+    fill="white" stroke="#FCA5A5" stroke-width="1.5" 
+    filter="url(#shadow)"/>
+<circle cx="81.5" cy="201" r="4.5" fill="#EF4444"/>
+
+  <text x="166" y="193" text-anchor="middle"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-size="13.5" font-weight="600" fill="#0F172A">Implement API</text>
+  <text x="166" y="213" text-anchor="middle"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-size="11" fill="#94A3B8">backend  ·  high</text>
+
+<!-- ── N3: Build frontend (med) ── -->
+<rect x="387.5" y="172" width="185" height="58" rx="10"
+    fill="white" stroke="#93C5FD" stroke-width="1.5" 
+    filter="url(#shadow)"/>
+<circle cx="401.5" cy="201" r="4.5" fill="#60A5FA"/>
+
+  <text x="486" y="193" text-anchor="middle"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-size="13.5" font-weight="600" fill="#0F172A">Build frontend</text>
+  <text x="486" y="213" text-anchor="middle"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-size="11" fill="#94A3B8">frontend  ·  medium</text>
+
+<!-- ── N4: Write unit tests (med) ── -->
+<rect x="227.5" y="296" width="185" height="58" rx="10"
+    fill="white" stroke="#93C5FD" stroke-width="1.5" 
+    filter="url(#shadow)"/>
+<circle cx="241.5" cy="325" r="4.5" fill="#60A5FA"/>
+
+  <text x="326" y="317" text-anchor="middle"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-size="13.5" font-weight="600" fill="#0F172A">Write unit tests</text>
+  <text x="326" y="337" text-anchor="middle"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif"
+    font-size="11" fill="#94A3B8">testing  ·  medium</text>
+</svg>
