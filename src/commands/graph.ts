@@ -22,7 +22,7 @@ export async function graphCommand(args: string[]): Promise<void> {
   }
 
   if (values.png != null) {
-    const outFile = (values.png as string) || "todo-dag.png";
+    const outFile = (values.png as string) || "depdo.png";
     await renderPng(graph, outFile);
     return;
   }

@@ -1,0 +1,7 @@
+tests/
+docs/
+.github/
+plan.md
+depdo
+*.png
+*.svg

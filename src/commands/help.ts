@@ -1,9 +1,9 @@
 import pc from "picocolors";
 
 const HELP = `
-${pc.bold("todo-dag")} — DAG-based task manager
+${pc.bold("depdo")} — dependency-aware todo manager
 
-${pc.bold("Usage:")} todo-dag <command> [options]
+${pc.bold("Usage:")} depdo <command> [options]
 
 ${pc.bold("Commands:")}
   ${pc.cyan("add")} <title> [options]      Add a task
@@ -30,11 +30,17 @@ ${pc.bold("Commands:")}
 
   ${pc.cyan("next")} [--limit <n>]          Show tasks ready to do (in-degree = 0)
 
-  ${pc.cyan("link")} <from> <to>            Add dependency: <from> blocks <to>
+  ${pc.cyan("link")} <id> --before <other>   <id> must be done before <other>
+  ${pc.cyan("link")} <id> --after <other>    <id> must be done after <other>
 
-  ${pc.cyan("unlink")} <from> <to>          Remove a dependency
+  ${pc.cyan("unlink")} <id-a> <id-b>          Remove dependency between two tasks
 
-  ${pc.cyan("graph")}                       Visualize the task DAG
+  ${pc.cyan("graph")} [options]             Visualize the task DAG
+      --all                          Include done tasks
+      --mermaid                      Output Mermaid syntax
+      --png <file>                   Render to PNG/SVG file
+
+  ${pc.cyan("status")}                      Overview of all tasks
 
   ${pc.cyan("help")}                        Show this help
 

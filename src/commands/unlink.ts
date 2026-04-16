@@ -4,25 +4,34 @@ import { formatId } from "../format";
 
 export async function unlinkCommand(args: string[]): Promise<void> {
   if (args.length < 2) {
-    console.error("Usage: todo-dag unlink <from-id> <to-id>");
+    console.error("Usage: depdo unlink <id-a> <id-b>");
+    console.error("  Removes the dependency between the two tasks (any direction).");
     process.exit(1);
   }
 
   const data = await loadGraph();
-  const activeIds = data.tasks.filter((t) => t.doneAt == null).map((t) => t.id);
+  const allIds = data.tasks.map((t) => t.id);
 
-  const fromId = resolveId(args[0]!, activeIds);
-  if (!fromId) process.exit(1);
-  const toId = resolveId(args[1]!, activeIds);
-  if (!toId) process.exit(1);
+  const idA = resolveId(args[0]!, allIds);
+  if (!idA) process.exit(1);
+  const idB = resolveId(args[1]!, allIds);
+  if (!idB) process.exit(1);
 
-  const idx = data.edges.findIndex((e) => e.from === fromId && e.to === toId);
+  // Find the edge in either direction
+  const idx = data.edges.findIndex(
+    (e) => (e.from === idA && e.to === idB) || (e.from === idB && e.to === idA)
+  );
+
   if (idx === -1) {
-    console.error(`No dependency from ${formatId(fromId)} to ${formatId(toId)} exists.`);
+    console.error(`No dependency between ${formatId(idA)} and ${formatId(idB)}.`);
     process.exit(1);
   }
 
+  const edge = data.edges[idx]!;
+  const fromTask = data.tasks.find((t) => t.id === edge.from)!;
+  const toTask = data.tasks.find((t) => t.id === edge.to)!;
+
   data.edges.splice(idx, 1);
   await saveGraph(data);
-  console.log(`Unlinked: ${formatId(fromId)}  -x-  ${formatId(toId)}`);
+  console.log(`Unlinked: ${formatId(edge.from)} ${fromTask.title}  ✕  ${formatId(edge.to)} ${toTask.title}`);
 }

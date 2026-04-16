@@ -18,7 +18,7 @@ export async function addCommand(args: string[]): Promise<void> {
 
   const title = positionals.join(" ");
   if (!title) {
-    console.error("Usage: todo-dag add <title> [--priority high|med|low] [--tag <t>] [--after <id>] [--before <id>]");
+    console.error("Usage: depdo add <title> [--priority high|med|low] [--tag <t>] [--after <id>] [--before <id>]");
     process.exit(1);
   }
 

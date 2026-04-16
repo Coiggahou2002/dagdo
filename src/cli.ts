@@ -9,6 +9,7 @@ import { nextCommand } from "./commands/next";
 import { linkCommand } from "./commands/link";
 import { unlinkCommand } from "./commands/unlink";
 import { graphCommand } from "./commands/graph";
+import { statusCommand } from "./commands/status";
 import { helpCommand } from "./commands/help";
 
 const args = process.argv.slice(2);
@@ -45,6 +46,9 @@ switch (command) {
   case "graph":
     await graphCommand(rest);
     break;
+  case "status":
+    await statusCommand(rest);
+    break;
   case "help":
   case "--help":
   case "-h":
@@ -53,6 +57,6 @@ switch (command) {
     break;
   default:
     console.error(`Unknown command: ${command}`);
-    console.error('Run "todo-dag help" for usage.');
+    console.error('Run "depdo help" for usage.');
     process.exit(1);
 }

@@ -11,6 +11,7 @@ export async function listCommand(args: string[]): Promise<void> {
       done: { type: "boolean", default: false },
       tag: { type: "string", short: "t" },
       priority: { type: "string", short: "p" },
+      json: { type: "boolean", default: false },
     },
   });
 
@@ -39,6 +40,12 @@ export async function listCommand(args: string[]): Promise<void> {
     if (!activeDone.has(edge.from)) {
       blockedCounts.set(edge.to, (blockedCounts.get(edge.to) ?? 0) + 1);
     }
+  }
+
+  if (values.json) {
+    const result = tasks.map((t) => ({ ...t, blockedBy: blockedCounts.get(t.id) ?? 0 }));
+    console.log(JSON.stringify(result, null, 2));
+    return;
   }
 
   console.log(formatTaskTable(tasks, blockedCounts));
