@@ -1,0 +1,25 @@
+{
+  "name": "todo-dag",
+  "module": "src/cli.ts",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "todo-dag": "src/cli.ts"
+  },
+  "scripts": {
+    "dev": "bun run src/cli.ts",
+    "build": "bash scripts/build.sh",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@hpcc-js/wasm-graphviz": "^1.21.2",
+    "@resvg/resvg-js": "^2.6.2",
+    "picocolors": "^1.1.1"
+  }
+}
