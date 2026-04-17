@@ -1,4 +1,4 @@
-import { mkdirSync, existsSync } from "fs";
+import { mkdirSync, existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 import type { GraphData } from "./types";
@@ -78,10 +78,9 @@ async function getDataFile(): Promise<string> {
 
 export async function loadGraph(): Promise<GraphData> {
   const dataFile = await getDataFile();
-  const file = Bun.file(dataFile);
-  if (!(await file.exists())) return defaultData();
+  if (!existsSync(dataFile)) return defaultData();
   try {
-    return (await file.json()) as GraphData;
+    return JSON.parse(readFileSync(dataFile, "utf-8")) as GraphData;
   } catch {
     console.error(`Error: failed to parse ${dataFile}`);
     return defaultData();
@@ -91,5 +90,5 @@ export async function loadGraph(): Promise<GraphData> {
 export async function saveGraph(data: GraphData): Promise<void> {
   const dataFile = await getDataFile();
   mkdirSync(join(dataFile, ".."), { recursive: true });
-  await Bun.write(dataFile, JSON.stringify(data, null, 2) + "\n");
+  writeFileSync(dataFile, JSON.stringify(data, null, 2) + "\n");
 }

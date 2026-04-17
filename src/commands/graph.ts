@@ -1,4 +1,5 @@
 import { parseArgs } from "util";
+import { writeFileSync } from "fs";
 import { loadGraph } from "../storage";
 import { buildActiveGraph, buildFullGraph } from "../graph/dag";
 import { renderAscii, renderMermaid, renderDot } from "../graph/render";
@@ -46,7 +47,7 @@ async function renderPng(graph: Parameters<typeof renderDot>[0], outFile: string
   const svg = graphviz.layout(dot, "svg", "dot");
 
   if (outFile.endsWith(".svg")) {
-    await Bun.write(outFile, svg);
+    writeFileSync(outFile, svg);
     console.log(`Saved: ${outFile}`);
     return;
   }
@@ -64,6 +65,6 @@ async function renderPng(graph: Parameters<typeof renderDot>[0], outFile: string
   const resvg = new Resvg(svg, { fitTo: { mode: "width", value: 1200 } });
   const pngData = resvg.render();
   const pngBuffer = pngData.asPng();
-  await Bun.write(outFile, pngBuffer);
+  writeFileSync(outFile, pngBuffer);
   console.log(`Saved: ${outFile}`);
 }
