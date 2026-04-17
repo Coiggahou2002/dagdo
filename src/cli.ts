@@ -11,8 +11,17 @@ import { unlinkCommand } from "./commands/unlink";
 import { graphCommand } from "./commands/graph";
 import { statusCommand } from "./commands/status";
 import { helpCommand } from "./commands/help";
+import { setGlobal } from "./storage";
 
 const args = process.argv.slice(2);
+
+// Extract --global flag before dispatching to subcommands
+const globalIdx = args.indexOf("--global");
+if (globalIdx !== -1) {
+  setGlobal(true);
+  args.splice(globalIdx, 1);
+}
+
 const command = args[0];
 const rest = args.slice(1);
 

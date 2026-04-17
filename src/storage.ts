@@ -69,10 +69,15 @@ function readLine(): Promise<string> {
 }
 
 let _dataFile: string | null = null;
+let _forceGlobal = false;
+
+export function setGlobal(value: boolean): void {
+  _forceGlobal = value;
+}
 
 async function getDataFile(): Promise<string> {
   if (_dataFile) return _dataFile;
-  _dataFile = await resolveDataFile();
+  _dataFile = _forceGlobal ? GLOBAL_DATA_FILE : await resolveDataFile();
   return _dataFile;
 }
 
