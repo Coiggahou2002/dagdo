@@ -62,9 +62,20 @@ dagdo edit <id> [--title <new>] [--priority <p>] [--tag <add>] [--untag <remove>
 dagdo rm <id> [--force]
 ```
 
+### View (render and open)
+```bash
+dagdo view
+```
+Renders the full graph (including done tasks) as a PNG and opens it with the system image viewer. A quick way to get a visual overview.
+
 ### Status overview
 ```bash
 dagdo status
+```
+
+### Version
+```bash
+dagdo --version
 ```
 
 ## ID shortcuts

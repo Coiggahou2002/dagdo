@@ -80,8 +80,10 @@ dagdo graph --all --png graph.png  # PNG image with done tasks grayed out
 | `dagdo graph` | Visualize DAG (`--mermaid`, `--png <file>`, `--all`) |
 | `dagdo edit <id>` | Edit task (`--title`, `--priority`, `--tag`, `--untag`) |
 | `dagdo rm <id>` | Remove task and its edges |
+| `dagdo view` | Render full graph as PNG and open it |
 | `dagdo status` | Overview: total, done, ready, blocked |
 | `dagdo help` | Show help |
+| `dagdo --version` | Print version |
 
 ### ID shortcuts
 
@@ -112,6 +114,13 @@ dagdo graph --all --png full.png   # include done tasks (grayed out)
 By default, tasks are stored globally in `~/.dagdo/data.json`.
 
 When you run dagdo inside a **git repository**, it checks for a `.dagdo/` directory in the repo root. If found, tasks are stored per-project in `.dagdo/data.json`. If not, dagdo prompts you to choose between project-level and global storage on first use.
+
+Use `--global` on any command to force global storage, skipping the git repo detection:
+
+```bash
+dagdo list --global
+dagdo add "personal task" --global
+```
 
 This means teams can commit `.dagdo/data.json` to share task graphs, or add `.dagdo/` to `.gitignore` for personal use.
 
