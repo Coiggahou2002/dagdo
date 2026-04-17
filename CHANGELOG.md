@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.2
+
+- Fix release build: move rendering deps to optionalDependencies and exclude from binary compilation
+- Binary users get core CLI; mermaid/graphviz rendering requires npm install of optional deps
+
 ## 0.5.1
 
 - Add `dagdo upgrade` command — checks npm for newer version and upgrades

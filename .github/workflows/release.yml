@@ -46,7 +46,14 @@ jobs:
         with:
           bun-version: latest
       - run: bun install
-      - run: bun build src/cli.ts --compile --target=${{ matrix.target }} --outfile ${{ matrix.artifact }}
+      - run: >
+          bun build src/cli.ts --compile
+          --target=${{ matrix.target }}
+          --outfile ${{ matrix.artifact }}
+          --external mermaid-isomorphic
+          --external playwright
+          --external @hpcc-js/wasm-graphviz
+          --external @resvg/resvg-js
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
