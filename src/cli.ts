@@ -12,6 +12,7 @@ import { graphCommand } from "./commands/graph";
 import { statusCommand } from "./commands/status";
 import { helpCommand } from "./commands/help";
 import { setGlobal } from "./storage";
+import pkg from "../package.json";
 
 const args = process.argv.slice(2);
 
@@ -57,6 +58,11 @@ switch (command) {
     break;
   case "status":
     await statusCommand(rest);
+    break;
+  case "version":
+  case "--version":
+  case "-v":
+    console.log(pkg.version);
     break;
   case "help":
   case "--help":
