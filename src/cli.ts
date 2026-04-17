@@ -9,6 +9,7 @@ import { nextCommand } from "./commands/next";
 import { linkCommand } from "./commands/link";
 import { unlinkCommand } from "./commands/unlink";
 import { graphCommand } from "./commands/graph";
+import { viewCommand } from "./commands/view";
 import { statusCommand } from "./commands/status";
 import { helpCommand } from "./commands/help";
 import { setGlobal } from "./storage";
@@ -56,6 +57,9 @@ switch (command) {
     break;
   case "graph":
     await graphCommand(rest);
+    break;
+  case "view":
+    await viewCommand();
     break;
   case "status":
     await statusCommand(rest);

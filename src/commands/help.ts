@@ -40,6 +40,8 @@ ${pc.bold("Commands:")}
       --mermaid                      Output Mermaid syntax
       --png <file>                   Render to PNG/SVG file
 
+  ${pc.cyan("view")}                        Render full graph as PNG and open it
+
   ${pc.cyan("status")}                      Overview of all tasks
 
   ${pc.cyan("help")}                        Show this help
