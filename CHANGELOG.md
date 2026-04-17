@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0
+
+- Switch PNG/SVG rendering from Graphviz to Mermaid (via mermaid-isomorphic + Playwright)
+- Anthropic-inspired warm color palette for graph output (parchment, terracotta, ivory)
+- Highlight ready tasks (in-degree zero) with terracotta accent, blocked tasks in ivory, done in muted gray
+- `dagdo view` now opens SVG instead of PNG for crisp rendering
+- Add `--dot` flag to use Graphviz as fallback renderer
+- Old Graphviz renderer preserved via `dagdo graph --png file --dot`
+
 ## 0.4.2
 
 - Sync README and skill with all current CLI commands (view, --global, --version)

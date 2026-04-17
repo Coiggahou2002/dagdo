@@ -7,7 +7,7 @@ import { graphCommand } from "./graph";
 export async function viewCommand(): Promise<void> {
   const dir = join(tmpdir(), "dagdo-view");
   mkdirSync(dir, { recursive: true });
-  const file = join(dir, `dagdo-${Date.now()}.png`);
+  const file = join(dir, `dagdo-${Date.now()}.svg`);
 
   await graphCommand(["--all", "--png", file]);
 

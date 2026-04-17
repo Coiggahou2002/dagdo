@@ -108,29 +108,50 @@ export function renderAscii(graph: AdjacencyGraph): string {
 export function renderMermaid(graph: AdjacencyGraph): string {
   if (graph.tasks.size === 0) return "graph TD\n    empty[No tasks]";
 
-  const lines: string[] = ["graph TD"];
+  // Anthropic-inspired warm palette
+  const theme = `%%{init: {'theme': 'base', 'themeVariables': {
+    'primaryColor': '#faf9f5',
+    'primaryTextColor': '#141413',
+    'primaryBorderColor': '#e8e6dc',
+    'lineColor': '#87867f',
+    'secondaryColor': '#f5f4ed',
+    'tertiaryColor': '#f0eee6',
+    'background': '#f5f4ed',
+    'mainBkg': '#faf9f5',
+    'nodeBorder': '#e8e6dc',
+    'clusterBkg': '#f5f4ed',
+    'clusterBorder': '#e8e6dc',
+    'titleColor': '#141413',
+    'edgeLabelBackground': '#f5f4ed',
+    'nodeTextColor': '#141413',
+    'fontFamily': 'Georgia, serif'
+  }}}%%`;
+
+  const lines: string[] = [theme, "graph TD"];
 
   const doneIds: string[] = [];
-  const highPri: string[] = [];
-  const lowPri: string[] = [];
+  const activeIds: string[] = [];
+  const readyIds: string[] = [];
 
-  // Define nodes with labels
   for (const [id, task] of graph.tasks) {
     const done = task.doneAt != null;
     if (done) {
       doneIds.push(id);
       lines.push(`    ${id}("${task.title} ✓")`);
     } else {
-      const pri = task.priority === "high" ? " !!!" : task.priority === "low" ? " ~" : "";
       const tags = task.tags.length > 0 ? ` [${task.tags.join(", ")}]` : "";
-      const label = `${task.title}${pri}${tags}`;
-      lines.push(`    ${id}("${label}")`);
-      if (task.priority === "high") highPri.push(id);
-      if (task.priority === "low") lowPri.push(id);
+      lines.push(`    ${id}("${task.title}${tags}")`);
+      // Check if ready (in-degree = 0 among active tasks)
+      const blockers = graph.inEdges.get(id);
+      const isReady = !blockers || blockers.size === 0;
+      if (isReady) {
+        readyIds.push(id);
+      } else {
+        activeIds.push(id);
+      }
     }
   }
 
-  // Define edges
   for (const [id] of graph.tasks) {
     const done = graph.tasks.get(id)!.doneAt != null;
     for (const to of graph.outEdges.get(id) ?? []) {
@@ -142,15 +163,17 @@ export function renderMermaid(graph: AdjacencyGraph): string {
     }
   }
 
-  // Style done nodes as gray
+  // Done: muted warm gray
   for (const id of doneIds) {
-    lines.push(`    style ${id} fill:#ddd,color:#999,stroke:#ccc`);
+    lines.push(`    style ${id} fill:#f0eee6,color:#87867f,stroke:#e8e6dc`);
   }
-  if (highPri.length > 0) {
-    lines.push(`    style ${highPri.join(",")} fill:#f66,color:#fff`);
+  // Ready (in-degree 0): terracotta accent
+  for (const id of readyIds) {
+    lines.push(`    style ${id} fill:#c96442,color:#faf9f5,stroke:#b5573a`);
   }
-  if (lowPri.length > 0) {
-    lines.push(`    style ${lowPri.join(",")} fill:#ccc,color:#333`);
+  // Blocked: ivory with warm border
+  for (const id of activeIds) {
+    lines.push(`    style ${id} fill:#faf9f5,color:#141413,stroke:#e8e6dc`);
   }
 
   return lines.join("\n");
