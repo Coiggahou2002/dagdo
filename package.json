@@ -4,7 +4,7 @@
   "description": "Dependency-aware todo manager — tasks as a DAG, topological sort tells you what to do next",
   "module": "src/cli.ts",
   "type": "module",
-  "files": ["src", "scripts"],
+  "files": ["src", "bin"],
   "bin": {
     "depdo": "src/cli.ts"
   },
@@ -15,6 +15,12 @@
     "typecheck": "tsc --noEmit"
   },
   "keywords": ["todo", "task", "dag", "dependency", "graph", "cli", "topological-sort"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Coiggahou2002/depdo.git"
+  },
+  "homepage": "https://github.com/Coiggahou2002/depdo",
+  "bugs": "https://github.com/Coiggahou2002/depdo/issues",
   "license": "MIT",
   "devDependencies": {
     "@types/bun": "latest"
