@@ -38,7 +38,8 @@ ${pc.bold("Commands:")}
   ${pc.cyan("graph")} [options]             Visualize the task DAG
       --all                          Include done tasks
       --mermaid                      Output Mermaid syntax
-      --png <file>                   Render to PNG/SVG file
+      --png <file>                   Render to PNG/SVG (Mermaid, requires playwright)
+      --dot                          Use Graphviz instead of Mermaid for --png
 
   ${pc.cyan("view")}                        Render full graph as PNG and open it
 

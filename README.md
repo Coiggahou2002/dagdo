@@ -77,7 +77,7 @@ dagdo graph --all --png graph.png  # PNG image with done tasks grayed out
 | `dagdo list` | List all active tasks with blocker counts |
 | `dagdo link <id> --before <other>` | Add dependency edge (with cycle detection) |
 | `dagdo unlink <id> <other>` | Remove dependency edge (direction-agnostic) |
-| `dagdo graph` | Visualize DAG (`--mermaid`, `--png <file>`, `--all`) |
+| `dagdo graph` | Visualize DAG (`--mermaid`, `--png <file>`, `--dot`, `--all`) |
 | `dagdo edit <id>` | Edit task (`--title`, `--priority`, `--tag`, `--untag`) |
 | `dagdo rm <id>` | Remove task and its edges |
 | `dagdo view` | Render full graph as PNG and open it |
@@ -103,10 +103,11 @@ dagdo graph
 # Mermaid (copy to GitHub issues, Notion, etc.)
 dagdo graph --mermaid
 
-# PNG or SVG (requires @hpcc-js/wasm-graphviz and @resvg/resvg-js)
+# PNG or SVG via Mermaid (requires mermaid-isomorphic and playwright)
 dagdo graph --png output.png
 dagdo graph --png output.svg
 dagdo graph --all --png full.png   # include done tasks (grayed out)
+dagdo graph --png output.png --dot # use Graphviz instead of Mermaid
 ```
 
 ## Data storage

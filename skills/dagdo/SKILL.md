@@ -54,6 +54,8 @@ dagdo list [--all] [--done] [--tag <tag>] [--priority <p>]
 dagdo graph              # ASCII tree in terminal
 dagdo graph --mermaid    # Mermaid syntax (for pasting into docs/issues)
 dagdo graph --all        # include completed tasks (shown grayed out)
+dagdo graph --png out.png          # render PNG via Mermaid
+dagdo graph --png out.png --dot    # render PNG via Graphviz
 ```
 
 ### Edit / remove
