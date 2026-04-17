@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.1
+
+- Add `dagdo upgrade` command — checks npm for newer version and upgrades
+- Startup version check (once per day, non-blocking) with update notice
+
 ## 0.5.0
 
 - Switch PNG/SVG rendering from Graphviz to Mermaid (via mermaid-isomorphic + Playwright)

@@ -14,6 +14,7 @@ import { statusCommand } from "./commands/status";
 import { helpCommand } from "./commands/help";
 import { setGlobal } from "./storage";
 import { checkAliasOffer } from "./alias";
+import { checkForUpdate, upgradeCommand } from "./upgrade";
 import pkg from "../package.json";
 
 const args = process.argv.slice(2);
@@ -27,6 +28,9 @@ if (globalIdx !== -1) {
 
 const command = args[0];
 const rest = args.slice(1);
+
+// Background update check (non-blocking, once per day)
+checkForUpdate();
 
 switch (command) {
   case "add":
@@ -63,6 +67,9 @@ switch (command) {
     break;
   case "status":
     await statusCommand(rest);
+    break;
+  case "upgrade":
+    await upgradeCommand();
     break;
   case "version":
   case "--version":

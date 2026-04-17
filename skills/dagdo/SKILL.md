@@ -75,6 +75,12 @@ Renders the full graph (including done tasks) as a PNG and opens it with the sys
 dagdo status
 ```
 
+### Upgrade
+```bash
+dagdo upgrade
+```
+Checks npm for a newer version and upgrades if available.
+
 ### Version
 ```bash
 dagdo --version

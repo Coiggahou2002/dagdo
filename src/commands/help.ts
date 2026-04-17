@@ -45,6 +45,8 @@ ${pc.bold("Commands:")}
 
   ${pc.cyan("status")}                      Overview of all tasks
 
+  ${pc.cyan("upgrade")}                     Check for updates and upgrade
+
   ${pc.cyan("help")}                        Show this help
 
 ${pc.bold("Global flag:")}

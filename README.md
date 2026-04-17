@@ -82,6 +82,7 @@ dagdo graph --all --png graph.png  # PNG image with done tasks grayed out
 | `dagdo rm <id>` | Remove task and its edges |
 | `dagdo view` | Render full graph as PNG and open it |
 | `dagdo status` | Overview: total, done, ready, blocked |
+| `dagdo upgrade` | Check for updates and upgrade |
 | `dagdo help` | Show help |
 | `dagdo --version` | Print version |
 
