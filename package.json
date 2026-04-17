@@ -4,7 +4,7 @@
   "description": "Dependency-aware todo manager — tasks as a DAG, topological sort tells you what to do next",
   "module": "src/cli.ts",
   "type": "module",
-  "files": ["src", "bin"],
+  "files": ["src", "bin", "skills"],
   "bin": {
     "dagdo": "bin/dagdo"
   },

@@ -115,6 +115,17 @@ When you run dagdo inside a **git repository**, it checks for a `.dagdo/` direct
 
 This means teams can commit `.dagdo/data.json` to share task graphs, or add `.dagdo/` to `.gitignore` for personal use.
 
+## Claude Code skill
+
+dagdo ships with a [Claude Code](https://claude.ai/code) skill that lets AI agents manage your tasks. To install:
+
+```bash
+# Copy the skill to your global Claude Code skills directory
+cp -r skills/dagdo ~/.claude/skills/dagdo
+```
+
+Then ask Claude: "help me plan the API refactor as dagdo tasks" — it will decompose the work, create tasks, and link dependencies automatically.
+
 ## License
 
 MIT
