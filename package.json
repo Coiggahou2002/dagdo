@@ -1,5 +1,5 @@
 {
-  "name": "dagdo",
+  "name": "@coiggahou2002/dagdo",
   "version": "0.1.0",
   "description": "Dependency-aware todo manager — tasks as a DAG, topological sort tells you what to do next",
   "module": "src/cli.ts",

@@ -21,7 +21,7 @@ Most todo apps treat tasks as a flat list. Real work has dependencies: you can't
 ### npm
 
 ```bash
-npm install -g dagdo
+npm install -g @coiggahou2002/dagdo
 ```
 
 ### From source (requires [Bun](https://bun.sh))
