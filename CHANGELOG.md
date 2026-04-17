@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- Add `dagdo view` — render full graph as PNG and open with system image viewer
+
 ## 0.4.0
 
 - Offer `dd` shell alias after 3+ invocations
