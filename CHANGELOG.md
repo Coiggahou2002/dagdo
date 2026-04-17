@@ -1,10 +1,11 @@
 # Changelog
 
-## 0.4.0 (unreleased)
+## 0.4.0
 
 - Offer `dd` shell alias after 3+ invocations
 - Add `--version` / `-v` flag
 - Auto-set package.json version from git tag in CI (no manual bump needed)
+- Require CHANGELOG entry before release (CI check + local pre-push hook)
 
 ## 0.3.0
 
