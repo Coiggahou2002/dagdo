@@ -1,2 +1,3 @@
-#!/bin/bash
-exec bun run "$(dirname "$(readlink -f "$0" 2>/dev/null || realpath "$0")")/../src/cli.ts" "$@"
+#!/usr/bin/env bash
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+exec bun run "$SCRIPT_DIR/../src/cli.ts" "$@"
