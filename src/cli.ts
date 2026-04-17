@@ -12,6 +12,7 @@ import { graphCommand } from "./commands/graph";
 import { statusCommand } from "./commands/status";
 import { helpCommand } from "./commands/help";
 import { setGlobal } from "./storage";
+import { checkAliasOffer } from "./alias";
 import pkg from "../package.json";
 
 const args = process.argv.slice(2);
@@ -75,3 +76,5 @@ switch (command) {
     console.error('Run "dagdo help" for usage.');
     process.exit(1);
 }
+
+await checkAliasOffer();
