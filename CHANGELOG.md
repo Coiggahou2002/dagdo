@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2
+
+- Sync README and skill with all current CLI commands (view, --global, --version)
+- Add CLAUDE.md project rules
+
 ## 0.4.1
 
 - Add `dagdo view` — render full graph as PNG and open with system image viewer
