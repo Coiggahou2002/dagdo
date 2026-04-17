@@ -31,7 +31,7 @@ export async function statusCommand(args: string[]): Promise<void> {
     ? progressBar(done, total, 30)
     : pc.dim("no tasks");
 
-  console.log(`${pc.bold("depdo")} status\n`);
+  console.log(`${pc.bold("dagdo")} status\n`);
   console.log(`  Total:    ${total}`);
   console.log(`  Done:     ${pc.green(String(done))}`);
   console.log(`  Active:   ${active}`);

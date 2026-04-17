@@ -13,7 +13,7 @@ export async function doneCommand(args: string[]): Promise<void> {
   });
 
   if (positionals.length === 0) {
-    console.error("Usage: depdo done <id> [<id2> ...] [--force]");
+    console.error("Usage: dagdo done <id> [<id2> ...] [--force]");
     process.exit(1);
   }
 

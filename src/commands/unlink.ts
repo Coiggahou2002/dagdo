@@ -4,7 +4,7 @@ import { formatId } from "../format";
 
 export async function unlinkCommand(args: string[]): Promise<void> {
   if (args.length < 2) {
-    console.error("Usage: depdo unlink <id-a> <id-b>");
+    console.error("Usage: dagdo unlink <id-a> <id-b>");
     console.error("  Removes the dependency between the two tasks (any direction).");
     process.exit(1);
   }

@@ -18,7 +18,7 @@ export async function editCommand(args: string[]): Promise<void> {
 
   const prefix = positionals[0];
   if (!prefix) {
-    console.error("Usage: depdo edit <id> [--title <new>] [--priority low|med|high] [--tag <add>] [--untag <remove>]");
+    console.error("Usage: dagdo edit <id> [--title <new>] [--priority low|med|high] [--tag <add>] [--untag <remove>]");
     process.exit(1);
   }
 

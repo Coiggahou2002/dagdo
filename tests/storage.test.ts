@@ -5,7 +5,7 @@ import { tmpdir } from "os";
 
 // We test storage logic by directly reading/writing JSON
 describe("storage format", () => {
-  const testDir = join(tmpdir(), "depdo-test-" + Date.now());
+  const testDir = join(tmpdir(), "dagdo-test-" + Date.now());
   const testFile = join(testDir, "data.json");
 
   beforeEach(() => {

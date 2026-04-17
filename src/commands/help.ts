@@ -1,9 +1,9 @@
 import pc from "picocolors";
 
 const HELP = `
-${pc.bold("depdo")} — dependency-aware todo manager
+${pc.bold("dagdo")} — dependency-aware todo manager
 
-${pc.bold("Usage:")} depdo <command> [options]
+${pc.bold("Usage:")} dagdo <command> [options]
 
 ${pc.bold("Commands:")}
   ${pc.cyan("add")} <title> [options]      Add a task

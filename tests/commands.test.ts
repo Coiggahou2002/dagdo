@@ -6,9 +6,9 @@ import type { GraphData } from "../src/types";
 
 // Helper: write a graph to a file and return the path
 function writeGraph(dir: string, data: GraphData): string {
-  const depDoDir = join(dir, ".depdo");
-  mkdirSync(depDoDir, { recursive: true });
-  const file = join(depDoDir, "data.json");
+  const dagdoDir = join(dir, ".dagdo");
+  mkdirSync(dagdoDir, { recursive: true });
+  const file = join(dagdoDir, "data.json");
   writeFileSync(file, JSON.stringify(data));
   return file;
 }
@@ -23,7 +23,7 @@ describe("link command", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = join(tmpdir(), "depdo-test-" + Date.now());
+    tmpDir = join(tmpdir(), "dagdo-test-" + Date.now());
     mkdirSync(tmpDir, { recursive: true });
   });
 
@@ -102,7 +102,7 @@ describe("findGitRoot", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = join(tmpdir(), "depdo-git-test-" + Date.now());
+    tmpDir = join(tmpdir(), "dagdo-git-test-" + Date.now());
     mkdirSync(tmpDir, { recursive: true });
   });
 
@@ -128,7 +128,7 @@ describe("findGitRoot", () => {
   it("returns null when no .git found", () => {
     // tmpDir has no .git — but walking up will hit the real filesystem root
     // Use a path under /tmp which definitely has no .git above it
-    const isolated = join(tmpdir(), "depdo-no-git-" + Date.now());
+    const isolated = join(tmpdir(), "dagdo-no-git-" + Date.now());
     mkdirSync(isolated, { recursive: true });
     // We can't truly test "null" without mocking the FS walk,
     // but we can verify a non-git dir doesn't find a .git within itself

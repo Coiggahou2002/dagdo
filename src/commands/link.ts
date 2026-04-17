@@ -16,8 +16,8 @@ export async function linkCommand(args: string[]): Promise<void> {
 
   const id = positionals[0];
   if (!id || (!values.before && !values.after)) {
-    console.error("Usage: depdo link <id> --before <other>");
-    console.error("       depdo link <id> --after <other>");
+    console.error("Usage: dagdo link <id> --before <other>");
+    console.error("       dagdo link <id> --after <other>");
     console.error("  --before: <id> must be done before <other>");
     console.error("  --after:  <id> must be done after <other>");
     process.exit(1);

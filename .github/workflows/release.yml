@@ -14,10 +14,10 @@ jobs:
         include:
           - os: macos-latest
             target: bun-darwin-arm64
-            artifact: depdo-darwin-arm64
+            artifact: dagdo-darwin-arm64
           - os: macos-latest
             target: bun-darwin-x64
-            artifact: depdo-darwin-x64
+            artifact: dagdo-darwin-x64
 
     runs-on: ${{ matrix.os }}
 
@@ -52,6 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -62,6 +63,4 @@ jobs:
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
-      - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - run: npm publish --access public

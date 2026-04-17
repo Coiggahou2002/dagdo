@@ -2,6 +2,6 @@ tests/
 docs/
 .github/
 plan.md
-depdo
+dagdo
 *.png
 *.svg

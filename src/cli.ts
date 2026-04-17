@@ -57,6 +57,6 @@ switch (command) {
     break;
   default:
     console.error(`Unknown command: ${command}`);
-    console.error('Run "depdo help" for usage.');
+    console.error('Run "dagdo help" for usage.');
     process.exit(1);
 }

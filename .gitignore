@@ -7,10 +7,10 @@ dist
 *.tgz
 
 # compiled binary
-/depdo
+/dagdo
 
 # project-level task data (generated, not committed by default)
-.depdo/
+.dagdo/
 
 # generated images
 *.png

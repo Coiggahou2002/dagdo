@@ -14,7 +14,7 @@ export async function removeCommand(args: string[]): Promise<void> {
 
   const prefix = positionals[0];
   if (!prefix) {
-    console.error("Usage: depdo rm <id> [--force]");
+    console.error("Usage: dagdo rm <id> [--force]");
     process.exit(1);
   }
 

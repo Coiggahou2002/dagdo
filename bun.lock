@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "depdo",
+      "name": "dagdo",
       "dependencies": {
         "@hpcc-js/wasm-graphviz": "^1.21.2",
         "@resvg/resvg-js": "^2.6.2",

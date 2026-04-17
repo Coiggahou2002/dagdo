@@ -26,7 +26,7 @@ export async function nextCommand(args: string[]): Promise<void> {
   if (ready.length === 0) {
     const activeCount = data.tasks.filter((t) => t.doneAt == null).length;
     if (activeCount === 0) {
-      console.log("No tasks. Run `depdo add` to get started.");
+      console.log("No tasks. Run `dagdo add` to get started.");
     } else {
       console.log("No ready tasks — all active tasks are blocked.");
     }

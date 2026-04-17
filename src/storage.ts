@@ -3,7 +3,7 @@ import { join } from "path";
 import { homedir } from "os";
 import type { GraphData } from "./types";
 
-const GLOBAL_DATA_DIR = join(homedir(), ".depdo");
+const GLOBAL_DATA_DIR = join(homedir(), ".dagdo");
 const GLOBAL_DATA_FILE = join(GLOBAL_DATA_DIR, "data.json");
 
 function defaultData(): GraphData {
@@ -27,8 +27,8 @@ function findGitRoot(from: string): string | null {
 /**
  * Resolve which data file to use:
  * - Not in a git repo → global
- * - In a git repo with existing .depdo/data.json → project
- * - In a git repo without .depdo/ → ask user
+ * - In a git repo with existing .dagdo/data.json → project
+ * - In a git repo without .dagdo/ → ask user
  */
 export async function resolveDataFile(): Promise<string> {
   const gitRoot = findGitRoot(process.cwd());
@@ -36,15 +36,15 @@ export async function resolveDataFile(): Promise<string> {
   // Not a git repo — use global
   if (!gitRoot) return GLOBAL_DATA_FILE;
 
-  const projectDataDir = join(gitRoot, ".depdo");
+  const projectDataDir = join(gitRoot, ".dagdo");
   const projectDataFile = join(projectDataDir, "data.json");
 
-  // .depdo directory already exists — use project store regardless of whether data.json is there yet
+  // .dagdo directory already exists — use project store regardless of whether data.json is there yet
   if (existsSync(projectDataDir)) return projectDataFile;
 
-  // Git repo but no .depdo — ask
+  // Git repo but no .dagdo — ask
   process.stdout.write(
-    `Found a git repo (${gitRoot}).\nUse project-level tasks (.depdo/) or global (~/.depdo/)? [p/G] `
+    `Found a git repo (${gitRoot}).\nUse project-level tasks (.dagdo/) or global (~/.dagdo/)? [p/G] `
   );
 
   const answer = await readLine();
