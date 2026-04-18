@@ -15,8 +15,7 @@
     "dev": "bun run src/cli.ts",
     "build": "bash scripts/build.sh",
     "test": "bun test",
-    "typecheck": "tsc --noEmit",
-    "release": "release-it"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": ["todo", "task", "dag", "dependency", "graph", "cli", "topological-sort"],
   "repository": {
@@ -27,9 +26,7 @@
   "bugs": "https://github.com/Coiggahou2002/dagdo/issues",
   "license": "MIT",
   "devDependencies": {
-    "@release-it/keep-a-changelog": "^7.0.1",
-    "@types/bun": "latest",
-    "release-it": "^20.0.0"
+    "@types/bun": "latest"
   },
   "peerDependencies": {
     "typescript": "^5"

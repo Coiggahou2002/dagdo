@@ -2,39 +2,106 @@ name: Release
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
-  test:
+  # Skip release commits made by this workflow
+  check:
     runs-on: ubuntu-latest
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+    steps:
+      - id: check
+        run: |
+          if [[ "${{ github.event.head_commit.message }}" == Release* ]]; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  version:
+    needs: check
+    if: needs.check.outputs.should_release == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
+      bump_type: ${{ steps.label.outputs.bump_type }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
       - run: bun install
-      - name: Check CHANGELOG has entry for this version
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          if ! grep -qE "## \[?$VERSION\]?" CHANGELOG.md; then
-            echo "::error::CHANGELOG.md has no entry for version $VERSION. Add a '## [$VERSION]' section before releasing."
-            exit 1
-          fi
-      - name: Check package.json version matches tag
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          if [ "$PKG_VERSION" != "$VERSION" ]; then
-            echo "::warning::package.json version ($PKG_VERSION) does not match tag ($VERSION). Remember to bump package.json before tagging."
-          fi
+
       - run: bun run typecheck
       - run: bun test
 
+      - name: Find merged PR and read label
+        id: label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Find the PR that was merged in this push
+            const commits = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+            });
+            const merged = commits.data.find(pr => pr.merged_at);
+            if (!merged) {
+              core.info('No merged PR found for this push, skipping release');
+              core.setOutput('bump_type', '');
+              return;
+            }
+            const labels = merged.labels.map(l => l.name);
+            const bump = labels.find(l => ['patch', 'minor', 'major'].includes(l));
+            if (!bump) {
+              core.info('No version label on PR #' + merged.number + ', skipping release');
+              core.setOutput('bump_type', '');
+              return;
+            }
+            core.info('PR #' + merged.number + ' has label: ' + bump);
+            core.setOutput('bump_type', bump);
+
+      - name: Bump version
+        id: bump
+        if: steps.label.outputs.bump_type != ''
+        run: |
+          BUMP="${{ steps.label.outputs.bump_type }}"
+          NEW_VERSION=$(npm version "$BUMP" --no-git-tag-version | tr -d 'v')
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Bumped to $NEW_VERSION ($BUMP)"
+
+      - name: Update CHANGELOG
+        if: steps.label.outputs.bump_type != ''
+        run: |
+          VERSION="${{ steps.bump.outputs.new_version }}"
+          DATE=$(date +%Y-%m-%d)
+          # Replace [Unreleased] with [version] - date, add new [Unreleased]
+          sed -i "s/## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
+
+      - name: Commit and tag
+        if: steps.label.outputs.bump_type != ''
+        run: |
+          VERSION="${{ steps.bump.outputs.new_version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json CHANGELOG.md
+          git commit -m "Release $VERSION"
+          git tag "v$VERSION"
+          git push
+          git push origin "v$VERSION"
+
   build:
-    needs: test
+    needs: version
+    if: needs.version.outputs.new_version != ''
     strategy:
       matrix:
         include:
@@ -49,13 +116,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
       - run: bun install
-      - name: Set version from tag
+      - name: Set version
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${{ needs.version.outputs.new_version }}"
           sed -i'' -e "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
       - run: >
           bun build src/cli.ts --compile
@@ -71,7 +140,7 @@ jobs:
           path: ${{ matrix.artifact }}
 
   release:
-    needs: build
+    needs: [version, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -81,23 +150,26 @@ jobs:
       - run: chmod +x artifacts/*
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ needs.version.outputs.new_version }}
           files: artifacts/*
           generate_release_notes: true
 
   publish:
-    needs: build
+    needs: [version, build]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
-      - name: Set version from tag
-        run: npm version "${GITHUB_REF_NAME#v}" --no-git-tag-version
+      - name: Set version from release
+        run: npm version "${{ needs.version.outputs.new_version }}" --no-git-tag-version
       - run: npm install --ignore-scripts
       - run: npm publish --provenance --access public
         env:
