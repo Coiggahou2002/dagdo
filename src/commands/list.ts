@@ -33,20 +33,24 @@ export async function listCommand(args: string[]): Promise<void> {
     tasks = tasks.filter((t) => t.priority === values.priority);
   }
 
-  // Compute blocked-by counts for active tasks
-  const blockedCounts = new Map<string, number>();
+  // Compute blocker names for active tasks
+  const taskMap = new Map(data.tasks.map((t) => [t.id, t]));
   const activeDone = new Set(data.tasks.filter((t) => t.doneAt != null).map((t) => t.id));
+  const blockerNames = new Map<string, string[]>();
   for (const edge of data.edges) {
     if (!activeDone.has(edge.from)) {
-      blockedCounts.set(edge.to, (blockedCounts.get(edge.to) ?? 0) + 1);
+      const fromTask = taskMap.get(edge.from);
+      const name = fromTask ? fromTask.title : edge.from;
+      if (!blockerNames.has(edge.to)) blockerNames.set(edge.to, []);
+      blockerNames.get(edge.to)!.push(name);
     }
   }
 
   if (values.json) {
-    const result = tasks.map((t) => ({ ...t, blockedBy: blockedCounts.get(t.id) ?? 0 }));
+    const result = tasks.map((t) => ({ ...t, blockedBy: blockerNames.get(t.id) ?? [] }));
     console.log(JSON.stringify(result, null, 2));
     return;
   }
 
-  console.log(formatTaskTable(tasks, blockedCounts));
+  console.log(formatTaskTable(tasks, blockerNames));
 }

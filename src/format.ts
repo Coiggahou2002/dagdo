@@ -25,12 +25,14 @@ export function formatTask(task: Task, extra?: string): string {
   return `${id}  ${pri}  ${title}${tags}${suffix}`;
 }
 
-export function formatTaskTable(tasks: Task[], blockedCounts?: Map<string, number>): string {
+export function formatTaskTable(tasks: Task[], blockerNames?: Map<string, string[]>): string {
   if (tasks.length === 0) return pc.dim("No tasks.");
   return tasks
     .map((t) => {
-      const blocked = blockedCounts?.get(t.id);
-      const extra = blocked != null && blocked > 0 ? pc.red(`(blocked by ${blocked})`) : undefined;
+      const blockers = blockerNames?.get(t.id);
+      const extra = blockers && blockers.length > 0
+        ? pc.red(`(blocked by: ${blockers.join(", ")})`)
+        : undefined;
       return formatTask(t, extra);
     })
     .join("\n");
