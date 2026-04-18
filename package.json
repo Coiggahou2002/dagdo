@@ -1,6 +1,6 @@
 {
   "name": "@coiggahou2002/dagdo",
-  "version": "0.3.0",
+  "version": "0.5.3",
   "description": "Dependency-aware todo manager — tasks as a DAG, topological sort tells you what to do next",
   "module": "src/cli.ts",
   "type": "module",
@@ -15,7 +15,8 @@
     "dev": "bun run src/cli.ts",
     "build": "bash scripts/build.sh",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "release": "release-it"
   },
   "keywords": ["todo", "task", "dag", "dependency", "graph", "cli", "topological-sort"],
   "repository": {
@@ -26,7 +27,9 @@
   "bugs": "https://github.com/Coiggahou2002/dagdo/issues",
   "license": "MIT",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@release-it/keep-a-changelog": "^7.0.1",
+    "@types/bun": "latest",
+    "release-it": "^20.0.0"
   },
   "peerDependencies": {
     "typescript": "^5"

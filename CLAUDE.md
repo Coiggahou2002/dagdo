@@ -12,7 +12,12 @@ Do not consider a CLI change complete until all three are in sync.
 
 ## Releases
 
-Before creating a version tag or triggering a release, CHANGELOG.md **must** contain an entry for that version (`## X.Y.Z`). Write the changelog entry before committing the release, not after. The CI pipeline and pre-push hook will reject releases without a changelog entry.
+Before creating a version tag or triggering a release:
+
+1. **Bump `package.json` version** to match the tag (e.g. `"version": "0.6.0"` for tag `v0.6.0`). This is the source of truth for `dagdo --version` and compiled binaries.
+2. **Write the CHANGELOG entry** (`## X.Y.Z`). The CI pipeline and pre-push hook will reject releases without one.
+
+Both must be done in the release commit, before tagging. CI has a fallback that patches the version from the tag, but the repo should always reflect the correct version.
 
 ## Post-push CI verification
 

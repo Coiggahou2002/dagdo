@@ -19,9 +19,16 @@ jobs:
       - name: Check CHANGELOG has entry for this version
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          if ! grep -q "## $VERSION" CHANGELOG.md; then
-            echo "::error::CHANGELOG.md has no entry for version $VERSION. Add a '## $VERSION' section before releasing."
+          if ! grep -qE "## \[?$VERSION\]?" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no entry for version $VERSION. Add a '## [$VERSION]' section before releasing."
             exit 1
+          fi
+      - name: Check package.json version matches tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$PKG_VERSION" != "$VERSION" ]; then
+            echo "::warning::package.json version ($PKG_VERSION) does not match tag ($VERSION). Remember to bump package.json before tagging."
           fi
       - run: bun run typecheck
       - run: bun test
@@ -46,6 +53,10 @@ jobs:
         with:
           bun-version: latest
       - run: bun install
+      - name: Set version from tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i'' -e "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
       - run: >
           bun build src/cli.ts --compile
           --target=${{ matrix.target }}
