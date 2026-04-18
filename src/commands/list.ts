@@ -33,24 +33,50 @@ export async function listCommand(args: string[]): Promise<void> {
     tasks = tasks.filter((t) => t.priority === values.priority);
   }
 
-  // Compute blocker names for active tasks
-  const taskMap = new Map(data.tasks.map((t) => [t.id, t]));
+  // Compute blocker IDs for active tasks (only active blockers)
   const activeDone = new Set(data.tasks.filter((t) => t.doneAt != null).map((t) => t.id));
-  const blockerNames = new Map<string, string[]>();
+  const blockerIds = new Map<string, string[]>();
   for (const edge of data.edges) {
     if (!activeDone.has(edge.from)) {
-      const fromTask = taskMap.get(edge.from);
-      const name = fromTask ? fromTask.title : edge.from;
-      if (!blockerNames.has(edge.to)) blockerNames.set(edge.to, []);
-      blockerNames.get(edge.to)!.push(name);
+      if (!blockerIds.has(edge.to)) blockerIds.set(edge.to, []);
+      blockerIds.get(edge.to)!.push(edge.from);
     }
   }
 
+  // Topological sort on the task set being listed
+  const taskIds = new Set(tasks.map((t) => t.id));
+  const inDegree = new Map<string, number>();
+  for (const t of tasks) inDegree.set(t.id, 0);
+  for (const edge of data.edges) {
+    if (taskIds.has(edge.from) && taskIds.has(edge.to) && !activeDone.has(edge.from)) {
+      inDegree.set(edge.to, (inDegree.get(edge.to) ?? 0) + 1);
+    }
+  }
+
+  const sorted: Task[] = [];
+  const taskMap = new Map(tasks.map((t) => [t.id, t]));
+  const queue = tasks.filter((t) => (inDegree.get(t.id) ?? 0) === 0).map((t) => t.id);
+  while (queue.length > 0) {
+    const id = queue.shift()!;
+    sorted.push(taskMap.get(id)!);
+    for (const edge of data.edges) {
+      if (edge.from === id && taskIds.has(edge.to) && !activeDone.has(id)) {
+        const deg = (inDegree.get(edge.to) ?? 1) - 1;
+        inDegree.set(edge.to, deg);
+        if (deg === 0) queue.push(edge.to);
+      }
+    }
+  }
+  // Append any remaining tasks not reached by topo sort (e.g. done tasks)
+  for (const t of tasks) {
+    if (!sorted.includes(t)) sorted.push(t);
+  }
+
   if (values.json) {
-    const result = tasks.map((t) => ({ ...t, blockedBy: blockerNames.get(t.id) ?? [] }));
+    const result = sorted.map((t) => ({ ...t, blockedBy: blockerIds.get(t.id) ?? [] }));
     console.log(JSON.stringify(result, null, 2));
     return;
   }
 
-  console.log(formatTaskTable(tasks, blockerNames));
+  console.log(formatTaskTable(sorted, blockerIds));
 }
