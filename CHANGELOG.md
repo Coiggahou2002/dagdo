@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.3
+
+- List tasks in topological order (unblocked first, deeper dependencies later)
+- Right-aligned blocked count column with ⏳ icon, replacing inline "(blocked by ...)"
+- CJK-aware column alignment
+
 ## 0.5.2
 
 - Fix release build: move rendering deps to optionalDependencies and exclude from binary compilation
