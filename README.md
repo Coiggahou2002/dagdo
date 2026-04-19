@@ -80,7 +80,7 @@ dagdo graph --all --png graph.png  # PNG image with done tasks grayed out
 | `dagdo graph` | Visualize DAG (`--mermaid`, `--png <file>`, `--dot`, `--all`) |
 | `dagdo edit <id>` | Edit task (`--title`, `--priority`, `--tag`, `--untag`) |
 | `dagdo rm <id>` | Remove task and its edges |
-| `dagdo view` | Render full graph as PNG and open it |
+| `dagdo view` | Render full graph as SVG and open it in your browser |
 | `dagdo status` | Overview: total, done, ready, blocked |
 | `dagdo sync init <url>` | Configure cloud sync with a git remote |
 | `dagdo sync` | Sync global tasks (fast-forward; errors on divergence) |
