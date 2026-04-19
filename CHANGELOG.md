@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Add `dagdo ui` — starts a local HTTP server and opens a browser tab with a live-updating graph view (React + React Flow + dagre layout). SSE pushes data changes within ~1s; read-only in this release, interactive editing to follow. (#8 stage 1, also closes #7)
+- `dagdo ui --port <n>` chooses a preferred port (default 3737, auto-increments on conflict); `--no-open` suppresses the browser.
+- Refactor: `globalDataDir()`/`globalDataFile()` now resolve `~/.dagdo/` lazily and honor `$HOME`, so overriding `HOME=…` works (previously Bun's macOS `os.homedir()` read passwd DB directly and ignored the env var).
+
 ## [0.7.2] - 2026-04-19
 
 - Fix: `dagdo view` now wraps the SVG in a minimal HTML page and opens it, so it reliably lands in a browser instead of whatever handler the OS has registered for `.svg`. Also adds Windows (`start`) to the opener matrix and a clearer error when `xdg-open` is missing on Linux (#12)

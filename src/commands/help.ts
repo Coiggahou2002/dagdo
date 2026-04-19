@@ -41,7 +41,11 @@ ${pc.bold("Commands:")}
       --png <file>                   Render to PNG/SVG (Mermaid, requires playwright)
       --dot                          Use Graphviz instead of Mermaid for --png
 
-  ${pc.cyan("view")}                        Render full graph as PNG and open it
+  ${pc.cyan("view")}                        Render full graph as SVG and open it in a browser
+
+  ${pc.cyan("ui")} [options]                 Open an interactive web view (live-updates)
+      --port <n>                     Preferred port (default 3737; increments on conflict)
+      --no-open                      Don't auto-open the browser
 
   ${pc.cyan("status")}                      Overview of all tasks
 

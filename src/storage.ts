@@ -4,15 +4,17 @@ import { homedir } from "os";
 import type { GraphData } from "./types";
 import * as git from "./git";
 
-const GLOBAL_DATA_DIR = join(homedir(), ".dagdo");
-const GLOBAL_DATA_FILE = join(GLOBAL_DATA_DIR, "data.json");
-
+// Paths are resolved lazily each call rather than frozen at module load, so
+// `HOME=/tmp/... dagdo …` (and test harnesses that swap HOME between cases)
+// work without surprising caching. `$HOME` is preferred over `homedir()`
+// because Bun's `os.homedir()` on macOS reads the passwd DB directly and
+// ignores the env var, which breaks `HOME=…` overrides.
 export function globalDataDir(): string {
-  return GLOBAL_DATA_DIR;
+  return join(process.env.HOME || homedir(), ".dagdo");
 }
 
 export function globalDataFile(): string {
-  return GLOBAL_DATA_FILE;
+  return join(globalDataDir(), "data.json");
 }
 
 function defaultData(): GraphData {
@@ -20,24 +22,27 @@ function defaultData(): GraphData {
 }
 
 export async function loadGraph(): Promise<GraphData> {
-  if (!existsSync(GLOBAL_DATA_FILE)) return defaultData();
+  const file = globalDataFile();
+  if (!existsSync(file)) return defaultData();
   try {
-    return JSON.parse(readFileSync(GLOBAL_DATA_FILE, "utf-8")) as GraphData;
+    return JSON.parse(readFileSync(file, "utf-8")) as GraphData;
   } catch {
-    console.error(`Error: failed to parse ${GLOBAL_DATA_FILE}`);
+    console.error(`Error: failed to parse ${file}`);
     return defaultData();
   }
 }
 
 export async function saveGraph(data: GraphData, commitMessage?: string): Promise<void> {
-  mkdirSync(GLOBAL_DATA_DIR, { recursive: true });
-  writeFileSync(GLOBAL_DATA_FILE, JSON.stringify(data, null, 2) + "\n");
+  const dir = globalDataDir();
+  const file = globalDataFile();
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(file, JSON.stringify(data, null, 2) + "\n");
 
   // Auto-commit when sync has been set up.
-  if (!git.isRepo(GLOBAL_DATA_DIR)) return;
+  if (!git.isRepo(dir)) return;
 
   try {
-    await git.commit(GLOBAL_DATA_DIR, commitMessage ?? "update");
+    await git.commit(dir, commitMessage ?? "update");
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`Warning: auto-commit failed (${msg}). Run 'dagdo sync' to recover.`);
