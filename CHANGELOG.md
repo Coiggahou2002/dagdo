@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-04-19
+
 - Fix: graph rendering now excludes done predecessors from a node's effective in-degree, so tasks whose only remaining blockers are already complete are shown as ready (#9)
 
 ## [0.7.0] - 2026-04-19
