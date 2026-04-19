@@ -4,31 +4,18 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
 jobs:
-  # Skip release commits made by this workflow
-  check:
-    runs-on: ubuntu-latest
-    outputs:
-      should_release: ${{ steps.check.outputs.should_release }}
-    steps:
-      - id: check
-        run: |
-          if [[ "${{ github.event.head_commit.message }}" == Release* ]]; then
-            echo "should_release=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_release=true" >> "$GITHUB_OUTPUT"
-          fi
-
   version:
-    needs: check
-    if: needs.check.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     outputs:
       new_version: ${{ steps.bump.outputs.new_version }}
-      bump_type: ${{ steps.label.outputs.bump_type }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,7 +35,6 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Find the PR that was merged in this push
             const commits = await github.rest.repos.listPullRequestsAssociatedWithCommit({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -56,7 +42,7 @@ jobs:
             });
             const merged = commits.data.find(pr => pr.merged_at);
             if (!merged) {
-              core.info('No merged PR found for this push, skipping release');
+              core.info('No merged PR found, skipping release');
               core.setOutput('bump_type', '');
               return;
             }
@@ -74,6 +60,8 @@ jobs:
         id: bump
         if: steps.label.outputs.bump_type != ''
         run: |
+          # Pull latest main in case a previous release pushed ahead
+          git pull --rebase origin main
           BUMP="${{ steps.label.outputs.bump_type }}"
           NEW_VERSION=$(npm version "$BUMP" --no-git-tag-version | tr -d 'v')
           echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
@@ -84,7 +72,6 @@ jobs:
         run: |
           VERSION="${{ steps.bump.outputs.new_version }}"
           DATE=$(date +%Y-%m-%d)
-          # Replace [Unreleased] with [version] - date, add new [Unreleased]
           sed -i "s/## \[Unreleased\]/## [Unreleased]\n\n## [$VERSION] - $DATE/" CHANGELOG.md
 
       - name: Commit and tag
@@ -117,15 +104,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: v${{ needs.version.outputs.new_version }}
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
       - run: bun install
-      - name: Set version
-        run: |
-          VERSION="${{ needs.version.outputs.new_version }}"
-          sed -i'' -e "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
       - run: >
           bun build src/cli.ts --compile
           --target=${{ matrix.target }}
@@ -163,13 +146,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: v${{ needs.version.outputs.new_version }}
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
-      - name: Set version from release
-        run: npm version "${{ needs.version.outputs.new_version }}" --no-git-tag-version
       - run: npm install --ignore-scripts
       - run: npm publish --provenance --access public
         env:
