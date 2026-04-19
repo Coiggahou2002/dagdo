@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-04-19
+
 - Overhaul release workflow: MR label-driven versioning, automated bump/tag/publish
 - Add alpha package publishing on feature branch push
 - Enforce branch protection: all changes via feature branch + MR
