@@ -55,9 +55,6 @@ ${pc.bold("Commands:")}
 
   ${pc.cyan("help")}                        Show this help
 
-${pc.bold("Global flag:")}
-  --global                         Use global storage (~/.dagdo/) regardless of git repo
-
 ${pc.bold("IDs:")} Use any unique prefix (e.g. "a3f" for "a3f1b2").
 `.trim();
 

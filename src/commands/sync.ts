@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readdirSync, writeFileSync } from "fs";
 import { homedir } from "os";
 import pc from "picocolors";
 import * as git from "../git";
-import { globalDataDir, globalDataFile, isGlobalStorage } from "../storage";
+import { globalDataDir, globalDataFile } from "../storage";
 
 type SyncSubcommand = "init" | "status" | null;
 
@@ -30,17 +30,6 @@ function parseSyncArgs(args: string[]): ParsedSyncArgs {
 }
 
 export async function syncCommand(args: string[]): Promise<void> {
-  // Sync only applies to global storage. In project-level mode the user's own
-  // project git handles sharing.
-  if (!(await isGlobalStorage())) {
-    console.error(
-      "dagdo sync only works with global storage (~/.dagdo/).\n" +
-        "Project-level tasks (.dagdo/ inside a git repo) sync via your project's own git.\n" +
-        "Pass --global to force global storage.",
-    );
-    process.exit(1);
-  }
-
   const parsed = parseSyncArgs(args);
 
   if (parsed.subcommand === "init") {

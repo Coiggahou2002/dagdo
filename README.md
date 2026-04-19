@@ -116,18 +116,7 @@ dagdo graph --png output.png --dot # use Graphviz instead of Mermaid
 
 ## Data storage
 
-By default, tasks are stored globally in `~/.dagdo/data.json`.
-
-When you run dagdo inside a **git repository**, it checks for a `.dagdo/` directory in the repo root. If found, tasks are stored per-project in `.dagdo/data.json`. If not, dagdo prompts you to choose between project-level and global storage on first use.
-
-Use `--global` on any command to force global storage, skipping the git repo detection:
-
-```bash
-dagdo list --global
-dagdo add "personal task" --global
-```
-
-This means teams can commit `.dagdo/data.json` to share task graphs, or add `.dagdo/` to `.gitignore` for personal use.
+Tasks are stored in `~/.dagdo/data.json` — one user-level todo list across all your projects. If you want the list synced across machines, see the next section.
 
 ## Cloud sync (optional)
 
@@ -158,8 +147,6 @@ dagdo sync status
 dagdo sync --accept-local    # keep local, overwrite remote
 dagdo sync --accept-remote   # keep remote, overwrite local
 ```
-
-Sync only applies to global storage. Project-level tasks (`.dagdo/data.json` inside your own git repo) are already versioned by that repo — use its sync, not dagdo's.
 
 ## Claude Code skill
 

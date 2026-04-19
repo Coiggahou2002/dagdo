@@ -9,9 +9,6 @@ dist
 # compiled binary
 /dagdo
 
-# project-level task data (generated, not committed by default)
-.dagdo/
-
 # generated images
 *.png
 *.svg
