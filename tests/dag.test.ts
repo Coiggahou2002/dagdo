@@ -1,5 +1,6 @@
 import { describe, it, expect } from "bun:test";
-import { buildActiveGraph, wouldCreateCycle } from "../src/graph/dag";
+import { buildActiveGraph, buildFullGraph, effectiveInDegree, wouldCreateCycle } from "../src/graph/dag";
+import { computeLayout, renderMermaid } from "../src/graph/render";
 import type { GraphData } from "../src/types";
 
 function makeData(taskIds: string[], edges: [string, string][], doneIds: string[] = []): GraphData {
@@ -64,5 +65,43 @@ describe("wouldCreateCycle", () => {
     const graph = buildActiveGraph(data);
     // Adding a -> d is redundant but not a cycle
     expect(wouldCreateCycle(graph, "a", "d")).toBeNull();
+  });
+});
+
+describe("effectiveInDegree (issue #9)", () => {
+  // Scenario from the bug report: A -> B -> C, A marked done.
+  // B should be "ready" (effective in-degree = 0) because its only blocker is done.
+  it("treats done predecessors as non-blocking on the full graph", () => {
+    const data = makeData(["a", "b", "c"], [["a", "b"], ["b", "c"]], ["a"]);
+    const graph = buildFullGraph(data);
+    expect(effectiveInDegree(graph, "a")).toBe(0); // root
+    expect(effectiveInDegree(graph, "b")).toBe(0); // A done ⇒ B unblocked
+    expect(effectiveInDegree(graph, "c")).toBe(1); // still blocked by active B
+  });
+
+  it("counts multiple unfinished predecessors", () => {
+    // a -> c, b -> c with only a done
+    const data = makeData(["a", "b", "c"], [["a", "c"], ["b", "c"]], ["a"]);
+    const graph = buildFullGraph(data);
+    expect(effectiveInDegree(graph, "c")).toBe(1);
+  });
+
+  it("computeLayout surfaces effective blocked count", () => {
+    const data = makeData(["a", "b", "c"], [["a", "b"], ["b", "c"]], ["a"]);
+    const layout = computeLayout(buildFullGraph(data));
+    const byId = new Map(layout.nodes.map((n) => [n.task.id, n]));
+    expect(byId.get("b")!.blocked).toBe(0);
+    expect(byId.get("c")!.blocked).toBe(1);
+  });
+
+  it("renderMermaid styles B as ready (terracotta) when its blocker is done", () => {
+    const data = makeData(["a", "b", "c"], [["a", "b"], ["b", "c"]], ["a"]);
+    const mermaid = renderMermaid(buildFullGraph(data));
+    // terracotta fill marks ready nodes
+    expect(mermaid).toContain("style b fill:#c96442");
+    // blocked nodes use ivory
+    expect(mermaid).toContain("style c fill:#faf9f5");
+    // done nodes use muted gray
+    expect(mermaid).toContain("style a fill:#f0eee6");
   });
 });
