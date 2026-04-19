@@ -35,6 +35,6 @@ export async function removeCommand(args: string[]): Promise<void> {
   data.tasks = data.tasks.filter((t) => t.id !== id);
   data.edges = data.edges.filter((e) => e.from !== id && e.to !== id);
 
-  await saveGraph(data);
+  await saveGraph(data, `rm: ${task.title}`);
   console.log(`Removed ${formatId(id)}  ${task.title}`);
 }

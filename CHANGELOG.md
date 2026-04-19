@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- Add `dagdo sync` — optional cloud sync via any git remote
+  - `dagdo sync init <url>` auto-detects whether to init+push or clone
+  - `dagdo sync` does fast-forward push/pull; refuses on divergence
+  - `--accept-local` / `--accept-remote` for explicit divergence resolution
+  - Auto-commits after every write when `~/.dagdo/` is a git repo
+- **Breaking:** Remove project-level storage. Tasks now live in `~/.dagdo/data.json` only. The `--global` flag (now a no-op) and the interactive project-vs-global prompt are gone; use tags to separate work domains, and `dagdo sync` for multi-machine syncing.
+
 ## [0.6.0] - 2026-04-19
 
 - Overhaul release workflow: MR label-driven versioning, automated bump/tag/publish

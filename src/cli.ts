@@ -11,21 +11,13 @@ import { unlinkCommand } from "./commands/unlink";
 import { graphCommand } from "./commands/graph";
 import { viewCommand } from "./commands/view";
 import { statusCommand } from "./commands/status";
+import { syncCommand } from "./commands/sync";
 import { helpCommand } from "./commands/help";
-import { setGlobal } from "./storage";
 import { checkAliasOffer } from "./alias";
 import { checkForUpdate, upgradeCommand } from "./upgrade";
 import pkg from "../package.json";
 
 const args = process.argv.slice(2);
-
-// Extract --global flag before dispatching to subcommands
-const globalIdx = args.indexOf("--global");
-if (globalIdx !== -1) {
-  setGlobal(true);
-  args.splice(globalIdx, 1);
-}
-
 const command = args[0];
 const rest = args.slice(1);
 
@@ -67,6 +59,9 @@ switch (command) {
     break;
   case "status":
     await statusCommand(rest);
+    break;
+  case "sync":
+    await syncCommand(rest);
     break;
   case "upgrade":
     await upgradeCommand();

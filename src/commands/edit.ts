@@ -46,6 +46,6 @@ export async function editCommand(args: string[]): Promise<void> {
     task.tags = task.tags.filter((tag) => tag !== t);
   }
 
-  await saveGraph(data);
+  await saveGraph(data, `edit: ${task.title}`);
   console.log(`Updated ${formatId(id)}  ${task.title}`);
 }

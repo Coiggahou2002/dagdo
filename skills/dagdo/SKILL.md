@@ -75,6 +75,16 @@ Renders the full graph (including done tasks) as a PNG and opens it with the sys
 dagdo status
 ```
 
+### Cloud sync (global storage only)
+```bash
+dagdo sync init <git-remote-url>   # one-time setup: init+push or clone
+dagdo sync                         # fast-forward push or pull
+dagdo sync status                  # show ahead/behind/diverged
+dagdo sync --accept-local          # force-push local (on divergence)
+dagdo sync --accept-remote         # force-pull remote (on divergence)
+```
+Sync only works with global storage. Project-level `.dagdo/` tasks are synced via the host project's own git, not dagdo's sync command. Requires `git` on PATH and a git remote the user can push to.
+
 ### Upgrade
 ```bash
 dagdo upgrade
@@ -90,22 +100,9 @@ dagdo --version
 
 Every task has a 6-char hex ID (e.g. `a3f1b2`). You can use any unique prefix: `a3f` or even `a` if unambiguous.
 
-## Storage scope: global vs project
+## Storage
 
-dagdo has two storage levels:
-
-- **Project-level** (default): tasks are stored in `.dagdo/data.json` inside the current git repo. This is for tasks that belong to the project — feature work, bugs, refactors tied to this codebase.
-- **Global** (`--global` flag): tasks are stored in `~/.dagdo/data.json`. This is for personal tasks that aren't tied to any specific project — errands, cross-project work, reminders.
-
-When running inside a git repo without an existing `.dagdo/` directory and without `--global`, dagdo will interactively prompt the user to choose. To avoid the prompt, always pass `--global` when the intent is global.
-
-**Determining scope from the user's request is your responsibility.** Before running any dagdo command, decide whether the user means global or project tasks:
-
-- **Clearly global**: "remind me to email Jack", "add to my personal todo", "what's on my plate this week", tasks unrelated to the current codebase → use `--global`
-- **Clearly project**: "track this bug", "add a task for the API refactor", "plan the authentication feature", tasks about code in the current repo → omit `--global`
-- **Ambiguous**: "add a task", "what should I work on" without further context → **ask the user** whether they mean global or project-level tasks before proceeding
-
-Append `--global` to every dagdo command in a given interaction once scope is established — don't mix scopes within one request.
+All tasks live in `~/.dagdo/data.json` — one user-level list. There is no project-level vs global distinction; dagdo tracks everything the user is working on in a single graph, and `tags` are the right tool to separate domains (e.g. `--tag work-api`, `--tag personal`).
 
 ## How to work with dagdo
 
@@ -135,24 +132,17 @@ dagdo graph
 
 **User says: "what should I work on?"**
 
-This is ambiguous — ask the user: "Do you mean tasks for this project, or your global todo list?" Then:
-
 ```bash
-dagdo next                   # project-level
-dagdo next --global          # global
+dagdo next
 ```
 
 **User says: "remind me to ask Jack for the server credentials"**
 
-This is clearly a personal/global task, not tied to the current repo:
-
 ```bash
-dagdo add "问 Jack 要 server 凭证" --priority high --global
+dagdo add "问 Jack 要 server 凭证" --priority high
 ```
 
 **User says: "I finished the database migration"**
-
-This is project work:
 
 ```bash
 dagdo list                   # find the task ID

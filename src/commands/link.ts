@@ -58,9 +58,8 @@ export async function linkCommand(args: string[]): Promise<void> {
   }
 
   data.edges.push({ from: fromId, to: toId });
-  await saveGraph(data);
-
   const fromTask = data.tasks.find((t) => t.id === fromId)!;
   const toTask = data.tasks.find((t) => t.id === toId)!;
+  await saveGraph(data, `link: ${fromTask.title} -> ${toTask.title}`);
   console.log(`Linked: ${formatId(fromId)} ${fromTask.title}  →  ${formatId(toId)} ${toTask.title}`);
 }

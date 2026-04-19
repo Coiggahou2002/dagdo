@@ -32,6 +32,6 @@ export async function unlinkCommand(args: string[]): Promise<void> {
   const toTask = data.tasks.find((t) => t.id === edge.to)!;
 
   data.edges.splice(idx, 1);
-  await saveGraph(data);
+  await saveGraph(data, `unlink: ${fromTask.title} x ${toTask.title}`);
   console.log(`Unlinked: ${formatId(edge.from)} ${fromTask.title}  ✕  ${formatId(edge.to)} ${toTask.title}`);
 }

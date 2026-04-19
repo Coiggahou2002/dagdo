@@ -20,6 +20,7 @@ export async function doneCommand(args: string[]): Promise<void> {
   const data = await loadGraph();
   const activeIds = data.tasks.filter((t) => t.doneAt == null).map((t) => t.id);
   const doneSet = new Set(data.tasks.filter((t) => t.doneAt != null).map((t) => t.id));
+  const doneTitles: string[] = [];
 
   for (const prefix of positionals) {
     const id = resolveId(prefix, activeIds);
@@ -40,6 +41,7 @@ export async function doneCommand(args: string[]): Promise<void> {
     const task = data.tasks.find((t) => t.id === id)!;
     task.doneAt = new Date().toISOString();
     doneSet.add(id);
+    doneTitles.push(task.title);
 
     console.log(`Done ${formatId(id)}  ${task.title}`);
 
@@ -56,5 +58,9 @@ export async function doneCommand(args: string[]): Promise<void> {
     }
   }
 
-  await saveGraph(data);
+  const message =
+    doneTitles.length === 1
+      ? `done: ${doneTitles[0]}`
+      : `done: ${doneTitles[0]} + ${doneTitles.length - 1} more`;
+  await saveGraph(data, message);
 }
