@@ -68,7 +68,7 @@ dagdo rm <id> [--force]
 ```bash
 dagdo view
 ```
-Renders the full graph (including done tasks) as a PNG and opens it with the system image viewer. A quick way to get a visual overview.
+Renders the full graph (including done tasks) as an SVG, wraps it in a minimal HTML page, and opens that HTML with the user's default browser. A quick way to get a zoomable visual overview.
 
 ### Status overview
 ```bash
