@@ -121,7 +121,7 @@ Tasks are stored in `~/.dagdo/data.json` — one user-level todo list across all
 
 ## Web view
 
-`dagdo ui` starts a local HTTP server on `http://localhost:3737`, opens your browser, and renders the task graph with live updates — if you add, complete, or link tasks from another terminal, the page reflects the change within a second. The view is read-only in this release; interactive editing (drag to reposition, connect handles to add edges, etc.) is coming in a follow-up.
+`dagdo ui` starts a local HTTP server on `http://localhost:3737`, opens your browser, and renders an interactive task graph. CLI changes from other terminals appear within a second; the browser can also edit: drag nodes to rearrange, drag from one node's bottom handle to another's top to create a dependency (with cycle detection), select a node/edge and press `Delete` to remove it, double-click a node title to rename it, and use the **+ New task** button in the header to add one.
 
 ```bash
 dagdo ui                  # default port 3737, opens a browser tab

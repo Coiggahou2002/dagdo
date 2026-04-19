@@ -70,13 +70,13 @@ dagdo view
 ```
 Renders the full graph (including done tasks) as an SVG, wraps it in a minimal HTML page, and opens that HTML with the user's default browser. A quick way to get a zoomable visual overview.
 
-### Interactive web view (live updates)
+### Interactive web view (live updates + editing)
 ```bash
 dagdo ui                # default port 3737
 dagdo ui --port 8080
 dagdo ui --no-open
 ```
-Starts a local server and opens a browser tab with a React + React Flow rendering of the graph. Page auto-updates within ~1s when the underlying data file changes (e.g. the user runs `dagdo add` in another terminal). Currently read-only; interactive editing is planned for a follow-up.
+Starts a local server and opens a browser tab with a React + React Flow rendering of the graph. Supports: drag to reposition nodes (ephemeral — positions are not persisted), drag handle-to-handle to create dependencies (cycle-checked server-side, rejected with a toast on conflict), select + `Delete` to remove nodes or edges, double-click title to rename, **+ New task** button to add. All mutations go through the same `~/.dagdo/data.json` that the CLI writes, so CLI edits and UI edits converge automatically.
 
 ### Status overview
 ```bash

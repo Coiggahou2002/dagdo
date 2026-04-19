@@ -1,8 +1,17 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "http";
 import { existsSync, readFileSync, statSync } from "fs";
 import { fileURLToPath } from "url";
-import { globalDataFile } from "../storage";
-import type { GraphData } from "../types";
+import { globalDataFile, loadGraph, saveGraph } from "../storage";
+import {
+  addEdge,
+  addTask,
+  findTask,
+  removeEdge,
+  removeTask,
+  updateTask,
+  type TaskPatch,
+} from "../graph/mutations";
+import type { GraphData, Priority } from "../types";
 
 // Resolves to <repo-root>/dist/web/index.html in both dev (bun run src/cli.ts)
 // and installed (node_modules/@coiggahou2002/dagdo/...) layouts — src/server/
@@ -21,13 +30,17 @@ export interface StartOptions {
 
 export async function startServer(opts: StartOptions): Promise<StartedServer> {
   const clients = new Set<ServerResponse>();
-  const server = createServer((req, res) => handleRequest(req, res, clients));
+  const broadcast = () => broadcastUpdate(clients);
+
+  const server = createServer((req, res) =>
+    handleRequest(req, res, clients, broadcast).catch((err) => {
+      sendJson(res, 500, { error: "internal", message: err instanceof Error ? err.message : String(err) });
+    }),
+  );
 
   const port = await listenWithRetry(server, opts.preferredPort);
 
-  const stopWatch = startWatcher(() => {
-    broadcastUpdate(clients);
-  });
+  const stopWatch = startWatcher(broadcast);
 
   return {
     port,
@@ -49,31 +62,59 @@ export async function startServer(opts: StartOptions): Promise<StartedServer> {
   };
 }
 
-function handleRequest(
+async function handleRequest(
   req: IncomingMessage,
   res: ServerResponse,
   clients: Set<ServerResponse>,
-): void {
+  broadcast: () => void,
+): Promise<void> {
   const url = req.url ?? "/";
+  const method = req.method ?? "GET";
 
-  if (req.method === "GET" && (url === "/" || url === "/index.html")) {
+  if (method === "GET" && (url === "/" || url === "/index.html")) {
     serveIndex(res);
     return;
   }
 
-  if (req.method === "GET" && url === "/api/graph") {
+  if (method === "GET" && url === "/api/graph") {
     serveGraph(res);
     return;
   }
 
-  if (req.method === "GET" && url === "/api/events") {
+  if (method === "GET" && url === "/api/events") {
     attachSseClient(res, clients);
     return;
   }
 
-  // Browsers request /favicon.ico automatically; respond empty so the
-  // DevTools console doesn't light up on every page load.
-  if (req.method === "GET" && url === "/favicon.ico") {
+  if (method === "POST" && url === "/api/tasks") {
+    await handleCreateTask(req, res, broadcast);
+    return;
+  }
+
+  if (method === "POST" && url === "/api/edges") {
+    await handleCreateEdge(req, res, broadcast);
+    return;
+  }
+
+  if (method === "DELETE" && url === "/api/edges") {
+    await handleDeleteEdge(req, res, broadcast);
+    return;
+  }
+
+  const taskIdMatch = /^\/api\/tasks\/([0-9a-f]{1,12})$/.exec(url);
+  if (taskIdMatch) {
+    const id = taskIdMatch[1]!;
+    if (method === "PATCH") {
+      await handleUpdateTask(req, res, broadcast, id);
+      return;
+    }
+    if (method === "DELETE") {
+      await handleDeleteTask(req, res, broadcast, id);
+      return;
+    }
+  }
+
+  if (method === "GET" && url === "/favicon.ico") {
     res.statusCode = 204;
     res.end();
     return;
@@ -82,6 +123,159 @@ function handleRequest(
   res.statusCode = 404;
   res.end("Not found");
 }
+
+// ─── writes ───────────────────────────────────────────────────────────
+
+async function handleCreateTask(
+  req: IncomingMessage,
+  res: ServerResponse,
+  broadcast: () => void,
+): Promise<void> {
+  const body = await readJsonBody(req);
+  if (!body || typeof body !== "object") return sendJson(res, 400, { error: "invalid_body" });
+
+  const title = (body as Record<string, unknown>).title;
+  if (typeof title !== "string" || title.trim().length === 0) {
+    return sendJson(res, 400, { error: "invalid_title" });
+  }
+
+  const priority = (body as Record<string, unknown>).priority;
+  const tags = (body as Record<string, unknown>).tags;
+  const args = {
+    title: title.trim(),
+    priority: isPriority(priority) ? priority : undefined,
+    tags: Array.isArray(tags) ? tags.filter((t): t is string => typeof t === "string") : undefined,
+  };
+
+  const graph = await loadGraph();
+  const { data, task } = addTask(graph, args);
+  await saveGraph(data, `add: ${task.title}`);
+  broadcast();
+  sendJson(res, 201, { task });
+}
+
+async function handleUpdateTask(
+  req: IncomingMessage,
+  res: ServerResponse,
+  broadcast: () => void,
+  id: string,
+): Promise<void> {
+  const body = await readJsonBody(req);
+  if (!body || typeof body !== "object") return sendJson(res, 400, { error: "invalid_body" });
+
+  const patch: TaskPatch = {};
+  const b = body as Record<string, unknown>;
+  if (typeof b.title === "string") patch.title = b.title;
+  if (isPriority(b.priority)) patch.priority = b.priority;
+  if (Array.isArray(b.tags)) patch.tags = b.tags.filter((t): t is string => typeof t === "string");
+  if (b.doneAt === null || typeof b.doneAt === "string") patch.doneAt = b.doneAt;
+
+  if (Object.keys(patch).length === 0) return sendJson(res, 400, { error: "empty_patch" });
+
+  const graph = await loadGraph();
+  const result = updateTask(graph, id, patch);
+  if (!result.ok) return sendJson(res, 404, { error: result.error });
+
+  await saveGraph(result.data, `edit: ${result.task.title}`);
+  broadcast();
+  sendJson(res, 200, { task: result.task });
+}
+
+async function handleDeleteTask(
+  _req: IncomingMessage,
+  res: ServerResponse,
+  broadcast: () => void,
+  id: string,
+): Promise<void> {
+  const graph = await loadGraph();
+  const result = removeTask(graph, id);
+  if (!result.ok) return sendJson(res, 404, { error: result.error });
+
+  await saveGraph(result.data, `rm: ${result.removedTask.title}`);
+  broadcast();
+  res.statusCode = 204;
+  res.end();
+}
+
+async function handleCreateEdge(
+  req: IncomingMessage,
+  res: ServerResponse,
+  broadcast: () => void,
+): Promise<void> {
+  const body = await readJsonBody(req);
+  if (!body || typeof body !== "object") return sendJson(res, 400, { error: "invalid_body" });
+  const b = body as Record<string, unknown>;
+  if (typeof b.from !== "string" || typeof b.to !== "string") {
+    return sendJson(res, 400, { error: "invalid_edge" });
+  }
+
+  const graph = await loadGraph();
+  const result = addEdge(graph, { from: b.from, to: b.to });
+  if (!result.ok) {
+    if (result.error === "task_not_found") {
+      return sendJson(res, 404, { error: "task_not_found", id: result.id });
+    }
+    if (result.error === "cycle") {
+      return sendJson(res, 409, { error: "cycle", path: result.path });
+    }
+    return sendJson(res, 409, { error: result.error });
+  }
+
+  const fromTitle = findTask(result.data, b.from)?.title ?? b.from;
+  const toTitle = findTask(result.data, b.to)?.title ?? b.to;
+  await saveGraph(result.data, `link: ${fromTitle} -> ${toTitle}`);
+  broadcast();
+  sendJson(res, 201, { ok: true });
+}
+
+async function handleDeleteEdge(
+  req: IncomingMessage,
+  res: ServerResponse,
+  broadcast: () => void,
+): Promise<void> {
+  const body = await readJsonBody(req);
+  if (!body || typeof body !== "object") return sendJson(res, 400, { error: "invalid_body" });
+  const b = body as Record<string, unknown>;
+  if (typeof b.from !== "string" || typeof b.to !== "string") {
+    return sendJson(res, 400, { error: "invalid_edge" });
+  }
+
+  const graph = await loadGraph();
+  const fromTitle = findTask(graph, b.from)?.title ?? b.from;
+  const toTitle = findTask(graph, b.to)?.title ?? b.to;
+  const result = removeEdge(graph, { from: b.from, to: b.to });
+  if (!result.ok) return sendJson(res, 404, { error: result.error });
+
+  await saveGraph(result.data, `unlink: ${fromTitle} x ${toTitle}`);
+  broadcast();
+  res.statusCode = 204;
+  res.end();
+}
+
+function isPriority(value: unknown): value is Priority {
+  return value === "low" || value === "med" || value === "high";
+}
+
+async function readJsonBody(req: IncomingMessage): Promise<unknown> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) chunks.push(chunk as Buffer);
+  const raw = Buffer.concat(chunks).toString("utf-8");
+  if (raw.length === 0) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function sendJson(res: ServerResponse, status: number, body: unknown): void {
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
+  res.end(JSON.stringify(body));
+}
+
+// ─── reads & streaming ───────────────────────────────────────────────
 
 function serveIndex(res: ServerResponse): void {
   if (!existsSync(UI_HTML_PATH)) {
@@ -103,23 +297,18 @@ function serveIndex(res: ServerResponse): void {
 
 function serveGraph(res: ServerResponse): void {
   const graph = readGraphSafely();
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
-  res.end(JSON.stringify(graph));
+  sendJson(res, 200, graph);
 }
 
 function attachSseClient(res: ServerResponse, clients: Set<ServerResponse>): void {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("Connection", "keep-alive");
-  // Flush headers so EventSource's onopen fires promptly.
   res.flushHeaders?.();
 
   clients.add(res);
   sendEvent(res, "update", readGraphSafely());
 
-  // Heartbeat every 25s so idle proxies don't kill the connection. SSE
-  // comments (`:` prefix) are ignored by the browser.
   const heartbeat = setInterval(() => {
     try {
       res.write(": ping\n\n");
@@ -161,11 +350,6 @@ function readGraphSafely(): GraphData {
   }
 }
 
-/**
- * Poll the data file's mtime every 500ms. Polling rather than fs.watch because
- * editors often save as delete+create which breaks persistent watches, and the
- * added latency is imperceptible for a todo list.
- */
 function startWatcher(onChange: () => void): () => void {
   let last = currentMtime();
   const iv = setInterval(() => {
@@ -189,7 +373,6 @@ function currentMtime(): number {
 }
 
 async function listenWithRetry(server: Server, startPort: number): Promise<number> {
-  // Port 0 means "let the OS pick any free port" — no retry needed.
   if (startPort === 0) {
     await listenOn(server, 0);
     const addr = server.address();
@@ -205,7 +388,6 @@ async function listenWithRetry(server: Server, startPort: number): Promise<numbe
       return port;
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code !== "EADDRINUSE") throw err;
-      // try next port
     }
   }
   throw new Error(
