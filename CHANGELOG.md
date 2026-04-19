@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-04-19
+
 - Add `dagdo sync` — optional cloud sync via any git remote
   - `dagdo sync init <url>` auto-detects whether to init+push or clone
   - `dagdo sync` does fast-forward push/pull; refuses on divergence
