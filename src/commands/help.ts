@@ -45,6 +45,12 @@ ${pc.bold("Commands:")}
 
   ${pc.cyan("status")}                      Overview of all tasks
 
+  ${pc.cyan("sync")} [options]              Sync global tasks with a git remote
+      init <url>                     Configure sync with a git remote URL
+      status                         Show sync status (ahead/behind/diverged)
+      --accept-local                 Force-push local state (overwrites remote)
+      --accept-remote                Force-pull remote state (overwrites local)
+
   ${pc.cyan("upgrade")}                     Check for updates and upgrade
 
   ${pc.cyan("help")}                        Show this help

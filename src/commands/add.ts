@@ -56,6 +56,6 @@ export async function addCommand(args: string[]): Promise<void> {
     data.edges.push({ from: task.id, to: depId });
   }
 
-  await saveGraph(data);
+  await saveGraph(data, `add: ${task.title}`);
   console.log(`Created ${formatId(task.id)}  ${task.title}`);
 }

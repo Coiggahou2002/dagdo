@@ -82,6 +82,9 @@ dagdo graph --all --png graph.png  # PNG image with done tasks grayed out
 | `dagdo rm <id>` | Remove task and its edges |
 | `dagdo view` | Render full graph as PNG and open it |
 | `dagdo status` | Overview: total, done, ready, blocked |
+| `dagdo sync init <url>` | Configure cloud sync with a git remote |
+| `dagdo sync` | Sync global tasks (fast-forward; errors on divergence) |
+| `dagdo sync status` | Show sync state (ahead/behind/diverged) |
 | `dagdo upgrade` | Check for updates and upgrade |
 | `dagdo help` | Show help |
 | `dagdo --version` | Print version |
@@ -125,6 +128,38 @@ dagdo add "personal task" --global
 ```
 
 This means teams can commit `.dagdo/data.json` to share task graphs, or add `.dagdo/` to `.gitignore` for personal use.
+
+## Cloud sync (optional)
+
+If you use dagdo across multiple machines, you can sync your global tasks through any git remote (GitHub, GitLab, self-hosted — whatever you already use).
+
+**Requirements:** `git` installed locally, and an empty (or existing dagdo-managed) git repository on a remote you control. Authentication is whatever your git already uses (SSH keys, credential helper) — dagdo never touches your credentials.
+
+```bash
+# On your first machine (with existing tasks)
+dagdo sync init git@github.com:you/my-dagdo-tasks.git
+# → pushes your local tasks to the remote
+
+# On a second machine (fresh install)
+dagdo sync init git@github.com:you/my-dagdo-tasks.git
+# → clones the remote into ~/.dagdo/
+
+# Day-to-day: after making changes, publish them
+dagdo sync
+# → fast-forward push (or pull, if remote is ahead)
+
+# Check where you stand
+dagdo sync status
+```
+
+**Model.** Sync assumes a single-user, one-active-device-at-a-time workflow. Each dagdo write auto-commits locally; `dagdo sync` pushes or pulls as a fast-forward. If both sides diverge (you edited on two machines without syncing in between), dagdo refuses to merge and asks you to pick a side explicitly:
+
+```bash
+dagdo sync --accept-local    # keep local, overwrite remote
+dagdo sync --accept-remote   # keep remote, overwrite local
+```
+
+Sync only applies to global storage. Project-level tasks (`.dagdo/data.json` inside your own git repo) are already versioned by that repo — use its sync, not dagdo's.
 
 ## Claude Code skill
 

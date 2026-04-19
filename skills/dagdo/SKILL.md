@@ -75,6 +75,16 @@ Renders the full graph (including done tasks) as a PNG and opens it with the sys
 dagdo status
 ```
 
+### Cloud sync (global storage only)
+```bash
+dagdo sync init <git-remote-url>   # one-time setup: init+push or clone
+dagdo sync                         # fast-forward push or pull
+dagdo sync status                  # show ahead/behind/diverged
+dagdo sync --accept-local          # force-push local (on divergence)
+dagdo sync --accept-remote         # force-pull remote (on divergence)
+```
+Sync only works with global storage. Project-level `.dagdo/` tasks are synced via the host project's own git, not dagdo's sync command. Requires `git` on PATH and a git remote the user can push to.
+
 ### Upgrade
 ```bash
 dagdo upgrade

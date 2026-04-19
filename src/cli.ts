@@ -11,6 +11,7 @@ import { unlinkCommand } from "./commands/unlink";
 import { graphCommand } from "./commands/graph";
 import { viewCommand } from "./commands/view";
 import { statusCommand } from "./commands/status";
+import { syncCommand } from "./commands/sync";
 import { helpCommand } from "./commands/help";
 import { setGlobal } from "./storage";
 import { checkAliasOffer } from "./alias";
@@ -67,6 +68,9 @@ switch (command) {
     break;
   case "status":
     await statusCommand(rest);
+    break;
+  case "sync":
+    await syncCommand(rest);
     break;
   case "upgrade":
     await upgradeCommand();
