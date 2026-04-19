@@ -1,9 +1,9 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
+    branches: [main]
+  merge_group:
     branches: [main]
 
 jobs:
@@ -17,3 +17,20 @@ jobs:
       - run: bun install
       - run: bun run typecheck
       - run: bun test
+
+  check-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require version label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            const versionLabels = labels.filter(l => ['patch', 'minor', 'major'].includes(l));
+            if (versionLabels.length === 0) {
+              core.setFailed('PR must have a version label: patch, minor, or major');
+            } else if (versionLabels.length > 1) {
+              core.setFailed('PR must have exactly one version label, found: ' + versionLabels.join(', '));
+            } else {
+              core.info('Version label: ' + versionLabels[0]);
+            }

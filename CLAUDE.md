@@ -10,21 +10,37 @@ When adding, removing, or modifying any CLI command or flag, update **all** of t
 
 Do not consider a CLI change complete until all three are in sync.
 
-## Releases
+## Branch strategy
 
-Before creating a version tag or triggering a release:
+- **Never push directly to main.** All changes go through feature branches + MR.
+- Feature branches: `feat/xxx`, `fix/xxx`, etc. Push freely.
+- main branch is protected: requires PR, review, and passing CI.
 
-1. **Bump `package.json` version** to match the tag (e.g. `"version": "0.6.0"` for tag `v0.6.0`). This is the source of truth for `dagdo --version` and compiled binaries.
-2. **Write the CHANGELOG entry** (`## X.Y.Z`). The CI pipeline and pre-push hook will reject releases without one.
+## Release workflow
 
-Both must be done in the release commit, before tagging. CI has a fallback that patches the version from the tag, but the repo should always reflect the correct version.
+Releases are fully automated via MR labels. The process:
 
-## Post-push CI verification
+1. Create a feature branch, make changes.
+2. Record changes under `## [Unreleased]` in CHANGELOG.md.
+3. Push the feature branch (triggers alpha package publish to npm).
+4. Open a MR to main. Add a version label: `patch`, `minor`, or `major`.
+5. CI runs tests + checks the label exists.
+6. After review + merge, Release CI automatically:
+   - Bumps package.json based on the label
+   - Updates CHANGELOG (moves Unreleased to versioned section)
+   - Commits, tags, builds binaries, publishes to npm + GitHub Releases
 
-After pushing a version tag, wait ~5 minutes then check the release workflow status:
+Do NOT:
+- Push directly to main
+- Manually create version tags
+- Manually bump package.json version (CI handles it)
+
+## Post-merge CI verification
+
+After a MR is merged, check the release workflow status:
 
 ```bash
 gh run list --repo Coiggahou2002/dagdo --workflow release.yml --limit 1
 ```
 
-If the run failed, investigate immediately — read the logs, fix the issue, and re-release. Do not consider a release done until the workflow succeeds.
+If the run failed, investigate immediately.

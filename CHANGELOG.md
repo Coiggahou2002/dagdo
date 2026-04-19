@@ -2,9 +2,12 @@
 
 ## [Unreleased]
 
-- Integrate release-it for standardized release workflow
-- Fix compiled binary version: CI now sets version from tag before build
-- Add version mismatch warning in CI
+- Overhaul release workflow: MR label-driven versioning, automated bump/tag/publish
+- Add alpha package publishing on feature branch push
+- Enforce branch protection: all changes via feature branch + MR
+- Fix compiled binary version: CI sets version before build
+- Remove release-it (replaced by CI automation)
+- Remove pre-push hook (replaced by CI label check)
 
 ## [0.5.3]
 
