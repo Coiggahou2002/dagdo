@@ -76,7 +76,7 @@ dagdo ui                # default port 3737
 dagdo ui --port 8080
 dagdo ui --no-open
 ```
-Starts a local server and opens a browser tab with a React + React Flow rendering of the graph. Supports: drag to reposition nodes (ephemeral — positions are not persisted), drag handle-to-handle to create dependencies (cycle-checked server-side, rejected with a toast on conflict), select + `Delete` to remove nodes or edges, double-click title to rename, **+ New task** button to add. All mutations go through the same `~/.dagdo/data.json` that the CLI writes, so CLI edits and UI edits converge automatically.
+Starts a local server and opens a browser tab with a React + React Flow rendering of the graph. Supports: drag to reposition nodes (ephemeral — positions are not persisted), drag handle-to-handle to create dependencies (cycle-checked server-side, rejected with a toast on conflict), select + `Delete` to remove nodes or edges, double-click title to rename, **+ New task** button to add. Click a node to open a property panel: change priority, add/remove tags, mark as done, or delete. Each node shows a small priority dot (high=terracotta / med=gray / low=muted). All mutations go through the same `~/.dagdo/data.json` that the CLI writes, so CLI edits and UI edits converge automatically.
 
 ### Status overview
 ```bash
