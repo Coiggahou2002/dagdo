@@ -4,6 +4,13 @@ import { join } from "path";
 import { tmpdir } from "os";
 import * as git from "../src/git";
 
+// CI runners don't have git identity configured. GIT_* env vars take precedence
+// over config so we don't need to mutate user or repo state.
+process.env.GIT_AUTHOR_NAME = "dagdo test";
+process.env.GIT_AUTHOR_EMAIL = "test@dagdo.local";
+process.env.GIT_COMMITTER_NAME = "dagdo test";
+process.env.GIT_COMMITTER_EMAIL = "test@dagdo.local";
+
 // Integration tests: use real git against tmp dirs.
 // `bareRemote` plays the role of the cloud (a bare repo); `local` is a working clone.
 
