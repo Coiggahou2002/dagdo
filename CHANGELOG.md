@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-04-19
+
 - Fix: `dagdo view` now wraps the SVG in a minimal HTML page and opens it, so it reliably lands in a browser instead of whatever handler the OS has registered for `.svg`. Also adds Windows (`start`) to the opener matrix and a clearer error when `xdg-open` is missing on Linux (#12)
 
 ## [0.7.1] - 2026-04-19
