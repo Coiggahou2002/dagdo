@@ -12,6 +12,7 @@ import { graphCommand } from "./commands/graph";
 import { viewCommand } from "./commands/view";
 import { statusCommand } from "./commands/status";
 import { syncCommand } from "./commands/sync";
+import { uiCommand } from "./commands/ui";
 import { helpCommand } from "./commands/help";
 import { checkAliasOffer } from "./alias";
 import { checkForUpdate, upgradeCommand } from "./upgrade";
@@ -62,6 +63,9 @@ switch (command) {
     break;
   case "sync":
     await syncCommand(rest);
+    break;
+  case "ui":
+    await uiCommand(rest);
     break;
   case "upgrade":
     await upgradeCommand();

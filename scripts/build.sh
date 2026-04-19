@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Build the React UI first so the binary can embed it at dist/web/index.html.
+bun run build:web
+
 bun build src/cli.ts --compile --outfile dagdo \
   --external mermaid-isomorphic \
   --external playwright \

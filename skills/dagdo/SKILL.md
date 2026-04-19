@@ -70,6 +70,14 @@ dagdo view
 ```
 Renders the full graph (including done tasks) as an SVG, wraps it in a minimal HTML page, and opens that HTML with the user's default browser. A quick way to get a zoomable visual overview.
 
+### Interactive web view (live updates)
+```bash
+dagdo ui                # default port 3737
+dagdo ui --port 8080
+dagdo ui --no-open
+```
+Starts a local server and opens a browser tab with a React + React Flow rendering of the graph. Page auto-updates within ~1s when the underlying data file changes (e.g. the user runs `dagdo add` in another terminal). Currently read-only; interactive editing is planned for a follow-up.
+
 ### Status overview
 ```bash
 dagdo status

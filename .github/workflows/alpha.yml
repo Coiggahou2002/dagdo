@@ -24,6 +24,9 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
@@ -35,6 +38,7 @@ jobs:
           ALPHA_VERSION="${BASE_VERSION}-alpha.${SHORT_SHA}"
           npm version "$ALPHA_VERSION" --no-git-tag-version
           echo "Publishing alpha: $ALPHA_VERSION"
+      - run: bun run build:web
       - run: npm install --ignore-scripts
       - run: npm publish --tag alpha --access public
         env:

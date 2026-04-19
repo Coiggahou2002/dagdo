@@ -1,8 +1,8 @@
-import { execSync } from "child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { graphCommand } from "./graph";
+import { openExternal } from "../open";
 
 export async function viewCommand(): Promise<void> {
   const dir = join(tmpdir(), "dagdo-view");
@@ -17,7 +17,7 @@ export async function viewCommand(): Promise<void> {
   const svg = readFileSync(svgFile, "utf-8");
   writeFileSync(htmlFile, wrapSvgInHtml(svg));
 
-  openFile(htmlFile);
+  openExternal(htmlFile);
 }
 
 /**
@@ -43,36 +43,4 @@ ${svg}
 </body>
 </html>
 `;
-}
-
-function openFile(path: string): void {
-  let command: string;
-  switch (process.platform) {
-    case "darwin":
-      command = `open "${path}"`;
-      break;
-    case "win32":
-      // `start ""` — the empty string is the window title, required so a quoted
-      // path isn't interpreted as the title.
-      command = `start "" "${path}"`;
-      break;
-    default:
-      command = `xdg-open "${path}"`;
-      break;
-  }
-
-  try {
-    execSync(command, { stdio: "ignore" });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (process.platform !== "darwin" && process.platform !== "win32") {
-      console.error(
-        `Failed to open ${path}: ${msg}\n` +
-          "Hint: xdg-open may not be installed. Install xdg-utils (apt: xdg-utils, dnf: xdg-utils) or open the file manually.",
-      );
-    } else {
-      console.error(`Failed to open ${path}: ${msg}`);
-    }
-    process.exit(1);
-  }
 }

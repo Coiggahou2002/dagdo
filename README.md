@@ -81,6 +81,7 @@ dagdo graph --all --png graph.png  # PNG image with done tasks grayed out
 | `dagdo edit <id>` | Edit task (`--title`, `--priority`, `--tag`, `--untag`) |
 | `dagdo rm <id>` | Remove task and its edges |
 | `dagdo view` | Render full graph as SVG and open it in your browser |
+| `dagdo ui` | Start a local web view with live updates (read-only for now) |
 | `dagdo status` | Overview: total, done, ready, blocked |
 | `dagdo sync init <url>` | Configure cloud sync with a git remote |
 | `dagdo sync` | Sync global tasks (fast-forward; errors on divergence) |
@@ -117,6 +118,18 @@ dagdo graph --png output.png --dot # use Graphviz instead of Mermaid
 ## Data storage
 
 Tasks are stored in `~/.dagdo/data.json` — one user-level todo list across all your projects. If you want the list synced across machines, see the next section.
+
+## Web view
+
+`dagdo ui` starts a local HTTP server on `http://localhost:3737`, opens your browser, and renders the task graph with live updates — if you add, complete, or link tasks from another terminal, the page reflects the change within a second. The view is read-only in this release; interactive editing (drag to reposition, connect handles to add edges, etc.) is coming in a follow-up.
+
+```bash
+dagdo ui                  # default port 3737, opens a browser tab
+dagdo ui --port 8080      # pick your own port
+dagdo ui --no-open        # don't auto-open — useful in remote/SSH sessions
+```
+
+Port conflicts auto-increment (e.g. a second instance will land on 3738). `Ctrl+C` stops the server.
 
 ## Cloud sync (optional)
 
