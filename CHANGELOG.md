@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- `dagdo ui` is now interactive: drag nodes to rearrange, handle-to-handle drag to create dependencies (server-side cycle check, 409 → toast on conflict), select + `Delete` removes nodes/edges, double-click to rename a title, **+ New task** button adds a task. Positions are session-only, deliberately not persisted. (#8 stage 2)
+- Add shared `src/graph/mutations.ts` — pure `addTask` / `updateTask` / `removeTask` / `addEdge` / `removeEdge` primitives that encode domain errors (cycle, duplicate, task_not_found, self_loop) in a discriminated union. Used by the new write endpoints (`POST /api/tasks`, `PATCH /api/tasks/:id`, `DELETE /api/tasks/:id`, `POST /api/edges`, `DELETE /api/edges`); the CLI continues to use its own implementation for now.
+
 ## [0.8.0] - 2026-04-19
 
 - Add `dagdo ui` — starts a local HTTP server and opens a browser tab with a live-updating graph view (React + React Flow + dagre layout). SSE pushes data changes within ~1s; read-only in this release, interactive editing to follow. (#8 stage 1, also closes #7)

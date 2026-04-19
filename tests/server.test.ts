@@ -103,4 +103,150 @@ describe("server", () => {
       await srv.stop();
     }
   });
+
+  it("POST /api/tasks creates a task and persists it", async () => {
+    const { startServer } = await import(`../src/server/server?t=${Date.now()}`);
+    const srv = await startServer({ preferredPort: 0 });
+
+    try {
+      const create = await fetch(`${srv.url}/api/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "new task", priority: "high" }),
+      });
+      expect(create.status).toBe(201);
+      const created = (await create.json()) as { task: { id: string; title: string; priority: string } };
+      expect(created.task.title).toBe("new task");
+      expect(created.task.priority).toBe("high");
+
+      // Read back via /api/graph to confirm persistence
+      const graphRes = await fetch(`${srv.url}/api/graph`);
+      const graph = (await graphRes.json()) as GraphData;
+      expect(graph.tasks.map((t) => t.id)).toContain(created.task.id);
+    } finally {
+      await srv.stop();
+    }
+  });
+
+  it("PATCH /api/tasks/:id updates a task", async () => {
+    const seed: GraphData = {
+      version: 1,
+      tasks: [
+        { id: "abcdef", title: "old", priority: "med", tags: [], createdAt: "2026-01-01T00:00:00Z", doneAt: null },
+      ],
+      edges: [],
+    };
+    writeFileSync(join(testHome, ".dagdo", "data.json"), JSON.stringify(seed));
+
+    const { startServer } = await import(`../src/server/server?t=${Date.now()}`);
+    const srv = await startServer({ preferredPort: 0 });
+
+    try {
+      const res = await fetch(`${srv.url}/api/tasks/abcdef`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "renamed" }),
+      });
+      expect(res.status).toBe(200);
+      const payload = (await res.json()) as { task: { title: string } };
+      expect(payload.task.title).toBe("renamed");
+    } finally {
+      await srv.stop();
+    }
+  });
+
+  it("DELETE /api/tasks/:id removes the task and its edges", async () => {
+    const seed: GraphData = {
+      version: 1,
+      tasks: [
+        { id: "aaaaaa", title: "a", priority: "med", tags: [], createdAt: "2026-01-01T00:00:00Z", doneAt: null },
+        { id: "bbbbbb", title: "b", priority: "med", tags: [], createdAt: "2026-01-01T00:00:00Z", doneAt: null },
+      ],
+      edges: [{ from: "aaaaaa", to: "bbbbbb" }],
+    };
+    writeFileSync(join(testHome, ".dagdo", "data.json"), JSON.stringify(seed));
+
+    const { startServer } = await import(`../src/server/server?t=${Date.now()}`);
+    const srv = await startServer({ preferredPort: 0 });
+
+    try {
+      const res = await fetch(`${srv.url}/api/tasks/aaaaaa`, { method: "DELETE" });
+      expect(res.status).toBe(204);
+
+      const graph = (await (await fetch(`${srv.url}/api/graph`)).json()) as GraphData;
+      expect(graph.tasks.map((t) => t.id)).toEqual(["bbbbbb"]);
+      expect(graph.edges).toEqual([]);
+    } finally {
+      await srv.stop();
+    }
+  });
+
+  it("POST /api/edges returns 409 on cycle", async () => {
+    const seed: GraphData = {
+      version: 1,
+      tasks: ["a", "b", "c"].map((id) => ({
+        id,
+        title: id,
+        priority: "med" as const,
+        tags: [],
+        createdAt: "2026-01-01T00:00:00Z",
+        doneAt: null,
+      })),
+      edges: [
+        { from: "a", to: "b" },
+        { from: "b", to: "c" },
+      ],
+    };
+    writeFileSync(join(testHome, ".dagdo", "data.json"), JSON.stringify(seed));
+
+    const { startServer } = await import(`../src/server/server?t=${Date.now()}`);
+    const srv = await startServer({ preferredPort: 0 });
+
+    try {
+      const res = await fetch(`${srv.url}/api/edges`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ from: "c", to: "a" }),
+      });
+      expect(res.status).toBe(409);
+      const body = (await res.json()) as { error: string; path?: string[] };
+      expect(body.error).toBe("cycle");
+      expect(body.path).toBeDefined();
+    } finally {
+      await srv.stop();
+    }
+  });
+
+  it("DELETE /api/edges removes the specified edge", async () => {
+    const seed: GraphData = {
+      version: 1,
+      tasks: ["a", "b"].map((id) => ({
+        id,
+        title: id,
+        priority: "med" as const,
+        tags: [],
+        createdAt: "2026-01-01T00:00:00Z",
+        doneAt: null,
+      })),
+      edges: [{ from: "a", to: "b" }],
+    };
+    writeFileSync(join(testHome, ".dagdo", "data.json"), JSON.stringify(seed));
+
+    const { startServer } = await import(`../src/server/server?t=${Date.now()}`);
+    const srv = await startServer({ preferredPort: 0 });
+
+    try {
+      const res = await fetch(`${srv.url}/api/edges`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ from: "a", to: "b" }),
+      });
+      expect(res.status).toBe(204);
+
+      const graph = (await (await fetch(`${srv.url}/api/graph`)).json()) as GraphData;
+      expect(graph.edges).toEqual([]);
+    } finally {
+      await srv.stop();
+    }
+  });
 });
