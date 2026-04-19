@@ -1,6 +1,7 @@
 import pc from "picocolors";
 import type { AdjacencyGraph, GraphLayout, LayoutNode, LayoutEdge, TaskId, Priority } from "../types";
 import { topologicalSort } from "./topo";
+import { effectiveInDegree } from "./dag";
 
 /**
  * Compute the graph layout — pure data, no rendering.
@@ -15,7 +16,7 @@ export function computeLayout(graph: AdjacencyGraph): GraphLayout {
 
   for (const [id, task] of graph.tasks) {
     const level = levels.get(id) ?? 0;
-    const blocked = graph.inEdges.get(id)?.size ?? 0;
+    const blocked = effectiveInDegree(graph, id);
     const blocking = graph.outEdges.get(id)?.size ?? 0;
     nodes.push({ task, level, blocked, blocking });
 
@@ -141,9 +142,8 @@ export function renderMermaid(graph: AdjacencyGraph): string {
     } else {
       const tags = task.tags.length > 0 ? ` [${task.tags.join(", ")}]` : "";
       lines.push(`    ${id}("${task.title}${tags}")`);
-      // Check if ready (in-degree = 0 among active tasks)
-      const blockers = graph.inEdges.get(id);
-      const isReady = !blockers || blockers.size === 0;
+      // "Ready" means no unfinished predecessors — done blockers don't count.
+      const isReady = effectiveInDegree(graph, id) === 0;
       if (isReady) {
         readyIds.push(id);
       } else {

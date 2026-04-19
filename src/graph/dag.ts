@@ -23,6 +23,22 @@ export function buildActiveGraph(data: GraphData): AdjacencyGraph {
   return { tasks, inEdges, outEdges };
 }
 
+/**
+ * In-degree counting only unfinished predecessors — what the user cares about
+ * when deciding whether a task is actually ready. Done tasks do not block
+ * anything, so edges from done tasks are ignored for this purpose.
+ */
+export function effectiveInDegree(graph: AdjacencyGraph, id: TaskId): number {
+  const blockers = graph.inEdges.get(id);
+  if (!blockers) return 0;
+  let count = 0;
+  for (const fromId of blockers) {
+    const predecessor = graph.tasks.get(fromId);
+    if (predecessor && predecessor.doneAt == null) count++;
+  }
+  return count;
+}
+
 export function buildFullGraph(data: GraphData): AdjacencyGraph {
   const allIds = new Set(data.tasks.map((t) => t.id));
   const tasks = new Map(data.tasks.map((t) => [t.id, t]));
