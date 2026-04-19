@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-04-19
+
 - Add `dagdo ui` — starts a local HTTP server and opens a browser tab with a live-updating graph view (React + React Flow + dagre layout). SSE pushes data changes within ~1s; read-only in this release, interactive editing to follow. (#8 stage 1, also closes #7)
 - `dagdo ui --port <n>` chooses a preferred port (default 3737, auto-increments on conflict); `--no-open` suppresses the browser.
 - Refactor: `globalDataDir()`/`globalDataFile()` now resolve `~/.dagdo/` lazily and honor `$HOME`, so overriding `HOME=…` works (previously Bun's macOS `os.homedir()` read passwd DB directly and ignored the env var).
