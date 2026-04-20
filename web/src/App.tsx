@@ -15,8 +15,17 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { layoutGraph } from "./layout";
-import { ApiError, createEdge, createTask, deleteEdge, deleteTask, updateTask } from "./api";
+import {
+  ApiError,
+  createEdge,
+  createTask,
+  deleteEdge,
+  deleteTask,
+  updateTask,
+  type TaskPatch,
+} from "./api";
 import { TaskNode, type TaskNodeData } from "./TaskNode";
+import { PropertyPanel } from "./PropertyPanel";
 import type { GraphData } from "./types";
 
 const EMPTY: GraphData = { version: 1, tasks: [], edges: [] };
@@ -32,6 +41,7 @@ export function App() {
   const [toast, setToast] = useState<Toast>(null);
   const [nodes, setNodes] = useState<FlowNode<TaskNodeData>[]>([]);
   const [edges, setEdges] = useState<FlowEdge[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // IDs of nodes the user has manually dragged — their positions should survive
   // SSE-driven rebuilds rather than snapping back to the dagre layout. Pristine
@@ -76,6 +86,12 @@ export function App() {
     });
   }, []);
 
+  const handlePatch = useCallback((id: string, patch: TaskPatch) => {
+    updateTask(id, patch).catch((err: unknown) => {
+      showToast({ kind: "error", text: formatError("Update failed", err) });
+    });
+  }, []);
+
   // ─── reconcile Flow state whenever server state changes ──────────────
   useEffect(() => {
     const autoLayout = layoutGraph(graph.tasks, graph.edges);
@@ -95,6 +111,7 @@ export function App() {
           id: task.id,
           type: "task",
           position: preserved ?? autoPos,
+          selected: selectedId === task.id,
           data: {
             task,
             state: auto?.state ?? "blocked",
@@ -110,6 +127,11 @@ export function App() {
     const aliveIds = new Set(graph.tasks.map((t) => t.id));
     for (const id of userPositioned.current) {
       if (!aliveIds.has(id)) userPositioned.current.delete(id);
+    }
+    // If the selected task was removed elsewhere, drop the selection so the
+    // panel closes rather than lingering on stale data.
+    if (selectedId && !aliveIds.has(selectedId)) {
+      setSelectedId(null);
     }
 
     setEdges(
@@ -127,7 +149,7 @@ export function App() {
         };
       }),
     );
-  }, [graph, handleRename]);
+  }, [graph, handleRename, selectedId]);
 
   // ─── React Flow event handlers ───────────────────────────────────────
   const onNodesChange = useCallback((changes: NodeChange[]) => {
@@ -174,6 +196,17 @@ export function App() {
     }
   }, []);
 
+  const onNodeClick = useCallback<NonNullable<React.ComponentProps<typeof ReactFlow>["onNodeClick"]>>(
+    (_event, node) => {
+      setSelectedId(node.id);
+    },
+    [],
+  );
+
+  const onPaneClick = useCallback(() => {
+    setSelectedId(null);
+  }, []);
+
   // ─── "add task" button ───────────────────────────────────────────────
   const onAddTask = useCallback(async () => {
     const title = window.prompt("New task title:");
@@ -203,6 +236,11 @@ export function App() {
     return { total: graph.tasks.length, done };
   }, [graph]);
 
+  const selectedTask = useMemo(
+    () => (selectedId ? graph.tasks.find((t) => t.id === selectedId) ?? null : null),
+    [selectedId, graph.tasks],
+  );
+
   return (
     <div className="dagdo-root">
       <header className="dagdo-header">
@@ -224,34 +262,52 @@ export function App() {
         </div>
       )}
 
-      {graph.tasks.length === 0 ? (
-        <div className="dagdo-empty">
-          <p>No tasks yet.</p>
-          <button className="dagdo-add-button" onClick={onAddTask}>
-            + Add your first task
-          </button>
-        </div>
-      ) : (
-        <div className="dagdo-canvas">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={NODE_TYPES}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onNodeDragStop={onNodeDragStop}
-            onConnect={onConnect}
-            onEdgesDelete={onEdgesDelete}
-            onNodesDelete={onNodesDelete}
-            fitView
-            proOptions={{ hideAttribution: true }}
-          >
-            <Background color="#e8e6dc" gap={20} />
-            <Controls showInteractive={false} />
-            <MiniMap pannable zoomable maskColor="rgba(245, 244, 237, 0.7)" />
-          </ReactFlow>
-        </div>
-      )}
+      <div className="dagdo-body">
+        {graph.tasks.length === 0 ? (
+          <div className="dagdo-empty">
+            <p>No tasks yet.</p>
+            <button className="dagdo-add-button" onClick={onAddTask}>
+              + Add your first task
+            </button>
+          </div>
+        ) : (
+          <div className="dagdo-canvas">
+            <ReactFlow
+              nodes={nodes}
+              edges={edges}
+              nodeTypes={NODE_TYPES}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onNodeDragStop={onNodeDragStop}
+              onConnect={onConnect}
+              onEdgesDelete={onEdgesDelete}
+              onNodesDelete={onNodesDelete}
+              onNodeClick={onNodeClick}
+              onPaneClick={onPaneClick}
+              fitView
+              proOptions={{ hideAttribution: true }}
+            >
+              <Background color="#e8e6dc" gap={20} />
+              <Controls showInteractive={false} />
+              <MiniMap pannable zoomable maskColor="rgba(245, 244, 237, 0.7)" />
+            </ReactFlow>
+          </div>
+        )}
+
+        {selectedTask && (
+          <PropertyPanel
+            task={selectedTask}
+            onChange={(patch) => handlePatch(selectedTask.id, patch)}
+            onDelete={() => {
+              deleteTask(selectedTask.id).catch((err: unknown) => {
+                showToast({ kind: "error", text: formatError("Delete failed", err) });
+              });
+              setSelectedId(null);
+            }}
+            onClose={() => setSelectedId(null)}
+          />
+        )}
+      </div>
     </div>
   );
 }
@@ -274,4 +330,3 @@ function formatError(prefix: string, err: unknown): string {
   if (err instanceof Error) return `${prefix}: ${err.message}`;
   return `${prefix}.`;
 }
-

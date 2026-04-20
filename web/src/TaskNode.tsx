@@ -47,6 +47,11 @@ function TaskNodeImpl(props: NodeProps) {
           if (state !== "done") setEditing(true);
         }}
       >
+        <span
+          className={`dagdo-node-pri dagdo-node-pri-${task.priority}`}
+          title={`priority: ${task.priority}`}
+          aria-label={`priority ${task.priority}`}
+        />
         {editing ? (
           <input
             ref={inputRef}

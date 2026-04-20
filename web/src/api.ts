@@ -1,4 +1,4 @@
-import type { Task } from "./types";
+import type { Priority, Task } from "./types";
 
 /**
  * Thin fetch wrapper — matches the server routes in src/server/server.ts.
@@ -56,7 +56,14 @@ export async function createTask(args: { title: string }): Promise<Task> {
   return body.task;
 }
 
-export async function updateTask(id: string, patch: { title?: string }): Promise<Task> {
+export interface TaskPatch {
+  title?: string;
+  priority?: Priority;
+  tags?: string[];
+  doneAt?: string | null;
+}
+
+export async function updateTask(id: string, patch: TaskPatch): Promise<Task> {
   const res = await fetch(`/api/tasks/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },

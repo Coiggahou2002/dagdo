@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- `dagdo ui` gains a property panel: click a node to open a sidebar with priority selector (high/med/low), tag chips with add/remove, a "mark as done" checkbox, and a delete button for discoverability. Each node now also shows a small priority dot so the canvas remains scannable with the panel closed. (#8 stage 3 — closes #8)
+
 ## [0.9.0] - 2026-04-19
 
 - `dagdo ui` is now interactive: drag nodes to rearrange, handle-to-handle drag to create dependencies (server-side cycle check, 409 → toast on conflict), select + `Delete` removes nodes/edges, double-click to rename a title, **+ New task** button adds a task. Positions are session-only, deliberately not persisted. (#8 stage 2)
