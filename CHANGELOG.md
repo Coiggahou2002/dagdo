@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Add dark-mode hero (`docs/hero-dark.svg`) and wire the README via a `<picture>` element with `prefers-color-scheme`, so the graph no longer looks like a bright slab on GitHub's dark theme. Regenerate both via `bun run scripts/gen-hero.ts [dark]`.
+
 ## [0.10.2] - 2026-04-21
 
 - Redraw README hero graph in the Linear palette with a richer 10-task topology (2 done roots → 2 ready → 4 blocked → integration hub → release), replacing the 4-task Slate-themed placeholder. Regenerate via `bun run scripts/gen-hero.ts > docs/hero.svg`.

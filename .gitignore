@@ -13,6 +13,7 @@ dist
 *.png
 *.svg
 !docs/hero.svg
+!docs/hero-dark.svg
 
 # code coverage
 coverage

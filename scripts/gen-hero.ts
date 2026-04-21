@@ -1,4 +1,9 @@
-// Run with: bun run scripts/gen-hero.ts > docs/hero.svg
+// Generate the README hero graph in a given theme.
+//
+//   bun run scripts/gen-hero.ts       > docs/hero.svg        # light (default)
+//   bun run scripts/gen-hero.ts dark  > docs/hero-dark.svg   # dark
+//
+// README uses <picture> with prefers-color-scheme to swap between them.
 
 const W = 860;
 const H = 640;
@@ -6,8 +11,35 @@ const NW = 160;
 const NH = 52;
 const R = 8;
 
+type Theme = "light" | "dark";
+
+interface Palette {
+  bg: string;
+  doneFill: string;
+  doneStroke: string;
+  doneText: string;
+  blockedFill: string;
+  blockedStroke: string;
+  blockedText: string;
+  blockedMeta: string;
+  readyFill: string;
+  readyText: string;
+  readyMeta: string;
+  priHigh: string;
+  priMed: string;
+  priLow: string;
+  edgeLive: string;
+  edgeDone: string;
+  /** Flood colour for the blocked-card drop shadow. */
+  shadowColor: string;
+  shadowOpacity: number;
+  /** Flood colour for the ready-node glow. */
+  elevatedGlow: string;
+  elevatedGlowOpacity: number;
+}
+
 // Linear-inspired light palette (mirrors web/src/styles.css).
-const C = {
+const LIGHT: Palette = {
   bg: "#f7f8f8",
   doneFill: "#f3f4f5",
   doneStroke: "#d0d6e0",
@@ -24,7 +56,39 @@ const C = {
   priLow: "#8a8f98",
   edgeLive: "#62666d",
   edgeDone: "#d0d6e0",
+  shadowColor: "#000000",
+  shadowOpacity: 0.05,
+  elevatedGlow: "#5e6ad2",
+  elevatedGlowOpacity: 0.22,
 };
+
+// Dark palette inspired by Linear's own dark theme: near-black page, lifted
+// surfaces, same indigo brand (it reads well on both backdrops).
+const DARK: Palette = {
+  bg: "#0e0e10",
+  doneFill: "#1c1c20",
+  doneStroke: "#2a2a30",
+  doneText: "#6c6f77",
+  blockedFill: "#1a1a1e",
+  blockedStroke: "rgba(255,255,255,0.08)",
+  blockedText: "#eeeeee",
+  blockedMeta: "#8a8f98",
+  readyFill: "#5e6ad2",
+  readyText: "#ffffff",
+  readyMeta: "rgba(255,255,255,0.78)",
+  priHigh: "#ff6368",
+  priMed: "#8a8f98",
+  priLow: "#55595f",
+  edgeLive: "#8a8f98",
+  edgeDone: "#3a3a40",
+  shadowColor: "#000000",
+  shadowOpacity: 0.3,
+  elevatedGlow: "#5e6ad2",
+  elevatedGlowOpacity: 0.4,
+};
+
+const theme: Theme = process.argv[2] === "dark" ? "dark" : "light";
+const C: Palette = theme === "dark" ? DARK : LIGHT;
 
 const FONT =
   "system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif";
@@ -177,10 +241,10 @@ const svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"
   xmlns="http://www.w3.org/2000/svg">
 <defs>
   <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
-    <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#000000" flood-opacity="0.05"/>
+    <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="${C.shadowColor}" flood-opacity="${C.shadowOpacity}"/>
   </filter>
   <filter id="shadow-elevated" x="-30%" y="-30%" width="160%" height="160%">
-    <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="#5e6ad2" flood-opacity="0.22"/>
+    <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="${C.elevatedGlow}" flood-opacity="${C.elevatedGlowOpacity}"/>
   </filter>
   <marker id="ah" markerWidth="9" markerHeight="6" refX="7" refY="3" orient="auto">
     <polygon points="0 0,8 3,0 6" fill="${C.edgeLive}"/>

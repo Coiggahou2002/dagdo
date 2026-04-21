@@ -2,7 +2,10 @@
 
 Dependency-aware todo manager. Tasks form a DAG (directed acyclic graph) — topological sort tells you what to do next.
 
-![dagdo graph](docs/hero.svg)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/hero-dark.svg">
+  <img alt="dagdo graph" src="docs/hero.svg">
+</picture>
 
 Most todo apps treat tasks as a flat list. Real work has dependencies: you can't deploy before tests pass, can't test before the API is built. **dagdo** models your tasks as a graph and always tells you which tasks are ready to work on right now (zero in-degree nodes).
 
