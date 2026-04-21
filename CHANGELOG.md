@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-04-21
+
 - `dagdo ui` now has a 20×20 hit area around each node connection handle (visible dot still 8×8), making it much easier to start a manual edge drag — especially on trackpads and high-DPI displays. Adjacent-rank zones stay well clear with dagre's 70px ranksep, and the node body's double-click-to-edit remains reliable. (#19)
 
 ## [0.11.0] - 2026-04-21
