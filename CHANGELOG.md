@@ -4,6 +4,10 @@
 
 - `dagdo ui` now has a 20×20 hit area around each node connection handle (visible dot still 8×8), making it much easier to start a manual edge drag — especially on trackpads and high-DPI displays. Adjacent-rank zones stay well clear with dagre's 70px ranksep, and the node body's double-click-to-edit remains reliable. (#19)
 
+## [0.11.0] - 2026-04-21
+
+- `dagdo ui` now lays out each disconnected subgraph in its own region, packing connected components left-to-right with a 120px gap instead of letting dagre fuse them into one oddly-shaped blob. Component order is stable (size desc, then lex-smallest task id), so adding or removing a node in one component no longer reshuffles the others. (#20)
+
 ## [0.10.3] - 2026-04-21
 
 - Add dark-mode hero (`docs/hero-dark.svg`) and wire the README via a `<picture>` element with `prefers-color-scheme`, so the graph no longer looks like a bright slab on GitHub's dark theme. Regenerate both via `bun run scripts/gen-hero.ts [dark]`.
