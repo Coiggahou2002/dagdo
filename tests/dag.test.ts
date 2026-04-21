@@ -94,14 +94,14 @@ describe("effectiveInDegree (issue #9)", () => {
     expect(byId.get("c")!.blocked).toBe(1);
   });
 
-  it("renderMermaid styles B as ready (terracotta) when its blocker is done", () => {
+  it("renderMermaid styles B as ready when its blocker is done", () => {
     const data = makeData(["a", "b", "c"], [["a", "b"], ["b", "c"]], ["a"]);
     const mermaid = renderMermaid(buildFullGraph(data));
-    // terracotta fill marks ready nodes
-    expect(mermaid).toContain("style b fill:#c96442");
-    // blocked nodes use ivory
-    expect(mermaid).toContain("style c fill:#faf9f5");
-    // done nodes use muted gray
-    expect(mermaid).toContain("style a fill:#f0eee6");
+    // Linear indigo CTA marks ready nodes
+    expect(mermaid).toContain("style b fill:#5e6ad2");
+    // blocked nodes use white surface
+    expect(mermaid).toContain("style c fill:#ffffff");
+    // done nodes use muted panel
+    expect(mermaid).toContain("style a fill:#f3f4f5");
   });
 });

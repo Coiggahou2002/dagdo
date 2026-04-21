@@ -109,23 +109,23 @@ export function renderAscii(graph: AdjacencyGraph): string {
 export function renderMermaid(graph: AdjacencyGraph): string {
   if (graph.tasks.size === 0) return "graph TD\n    empty[No tasks]";
 
-  // Anthropic-inspired warm palette
+  // Linear-inspired light palette (mirrors web/src/styles.css and docs/hero.svg).
   const theme = `%%{init: {'theme': 'base', 'themeVariables': {
-    'primaryColor': '#faf9f5',
-    'primaryTextColor': '#141413',
-    'primaryBorderColor': '#e8e6dc',
-    'lineColor': '#87867f',
-    'secondaryColor': '#f5f4ed',
-    'tertiaryColor': '#f0eee6',
-    'background': '#f5f4ed',
-    'mainBkg': '#faf9f5',
-    'nodeBorder': '#e8e6dc',
-    'clusterBkg': '#f5f4ed',
-    'clusterBorder': '#e8e6dc',
-    'titleColor': '#141413',
-    'edgeLabelBackground': '#f5f4ed',
-    'nodeTextColor': '#141413',
-    'fontFamily': 'Georgia, serif'
+    'primaryColor': '#ffffff',
+    'primaryTextColor': '#1a1a1e',
+    'primaryBorderColor': '#e6e6e6',
+    'lineColor': '#62666d',
+    'secondaryColor': '#f7f8f8',
+    'tertiaryColor': '#f3f4f5',
+    'background': '#f7f8f8',
+    'mainBkg': '#ffffff',
+    'nodeBorder': '#e6e6e6',
+    'clusterBkg': '#f7f8f8',
+    'clusterBorder': '#e6e6e6',
+    'titleColor': '#1a1a1e',
+    'edgeLabelBackground': '#f7f8f8',
+    'nodeTextColor': '#1a1a1e',
+    'fontFamily': 'system-ui, -apple-system, sans-serif'
   }}}%%`;
 
   const lines: string[] = [theme, "graph TD"];
@@ -163,17 +163,17 @@ export function renderMermaid(graph: AdjacencyGraph): string {
     }
   }
 
-  // Done: muted warm gray
+  // Done: muted panel + subtle text
   for (const id of doneIds) {
-    lines.push(`    style ${id} fill:#f0eee6,color:#87867f,stroke:#e8e6dc`);
+    lines.push(`    style ${id} fill:#f3f4f5,color:#8a8f98,stroke:#d0d6e0`);
   }
-  // Ready (in-degree 0): terracotta accent
+  // Ready (in-degree 0): Linear indigo CTA
   for (const id of readyIds) {
-    lines.push(`    style ${id} fill:#c96442,color:#faf9f5,stroke:#b5573a`);
+    lines.push(`    style ${id} fill:#5e6ad2,color:#ffffff,stroke:#5e6ad2`);
   }
-  // Blocked: ivory with warm border
+  // Blocked: white card with subtle border
   for (const id of activeIds) {
-    lines.push(`    style ${id} fill:#faf9f5,color:#141413,stroke:#e8e6dc`);
+    lines.push(`    style ${id} fill:#ffffff,color:#1a1a1e,stroke:#e6e6e6`);
   }
 
   return lines.join("\n");
