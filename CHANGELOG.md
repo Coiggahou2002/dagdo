@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Redraw README hero graph in the Linear palette with a richer 10-task topology (2 done roots → 2 ready → 4 blocked → integration hub → release), replacing the 4-task Slate-themed placeholder. Regenerate via `bun run scripts/gen-hero.ts > docs/hero.svg`.
+- Update Mermaid theme for `dagdo graph --png` to match: white cards with indigo `#5e6ad2` ready nodes, muted-panel done nodes, `system-ui` font.
+
 ## [0.10.1] - 2026-04-21
 
 - Restyle `dagdo ui` with a Linear-inspired light theme: indigo CTA (`#5e6ad2` hover `#7170ff`), ring-shadow cards replacing hard 1px borders, 6px radius buttons, chip-style pill tags, and mono uppercase labels for metadata. System UI font (`system-ui` stack) — no web fonts fetched.
