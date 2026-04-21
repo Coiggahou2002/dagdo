@@ -282,12 +282,38 @@ body,
   opacity: 0.4;
 }
 
-/* React Flow handles */
+/* React Flow handles
+ *
+ * The visible dot stays 8×8, but we enlarge the pointer-event target to 20×20
+ * via a transparent ::before overlay. This makes it much easier to start an
+ * edge drag — especially on trackpads / high-DPI — without making the UI feel
+ * heavier. The overlay is centered on the handle (React Flow already
+ * translate(-50%, -50%)s the handle onto the node edge), so it extends 10px
+ * in every direction. With dagre ranksep=70, adjacent-rank hit zones stay
+ * well clear of each other (≥50px of gap between them), and with node padding
+ * of 12px the zone only reaches into the node body's inner padding — click /
+ * double-click on the node body itself remain reliable. */
 .react-flow__handle {
   width: 8px;
   height: 8px;
   background: var(--subtle);
   border: 1px solid var(--surface);
+}
+
+.react-flow__handle::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  background: transparent;
+  /* Pseudo-element is transparent, so it doesn't occlude the visible dot.
+   * Events on this overlay bubble as if they originated on the parent
+   * .react-flow__handle, which is what React Flow's connection handler
+   * listens on — so drag begins exactly as it would on the dot itself. */
+  pointer-events: auto;
 }
 
 .react-flow__handle:hover {
