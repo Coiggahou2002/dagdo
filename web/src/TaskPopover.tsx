@@ -3,7 +3,7 @@ import type { Priority, Task } from "./types";
 
 interface TaskPopoverProps {
   task: Task;
-  onChange: (patch: { priority?: Priority; tags?: string[]; doneAt?: string | null }) => void;
+  onChange: (patch: { title?: string; priority?: Priority; tags?: string[]; doneAt?: string | null }) => void;
   onDelete: () => void;
   onClose: () => void;
 }
@@ -17,11 +17,34 @@ const PRIORITIES: Priority[] = ["high", "med", "low"];
  */
 export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverProps) {
   const [tagDraft, setTagDraft] = useState("");
+  const [titleDraft, setTitleDraft] = useState(task.title);
 
-  // Reset the tag draft when switching between tasks so input doesn't leak.
+  // Reset input drafts when switching between tasks so nothing leaks across.
   useEffect(() => {
     setTagDraft("");
-  }, [task.id]);
+    setTitleDraft(task.title);
+  }, [task.id, task.title]);
+
+  function commitTitle(): void {
+    const next = titleDraft.trim();
+    if (next.length === 0 || next === task.title) {
+      setTitleDraft(task.title);
+      return;
+    }
+    onChange({ title: next });
+  }
+
+  function onTitleKeyDown(e: KeyboardEvent<HTMLInputElement>): void {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.currentTarget.blur();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      setTitleDraft(task.title);
+      e.currentTarget.blur();
+    }
+  }
 
   function addTag(raw: string): void {
     const tag = raw.trim();
@@ -70,6 +93,22 @@ export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverPr
         <button className="dagdo-popover-close" onClick={onClose} aria-label="Close">
           ✕
         </button>
+      </div>
+
+      <div className="dagdo-popover-row">
+        <div className="dagdo-popover-label">Title</div>
+        <input
+          className="dagdo-popover-input dagdo-popover-input-title"
+          value={titleDraft}
+          onChange={(e) => setTitleDraft(e.target.value)}
+          onKeyDown={onTitleKeyDown}
+          // React Flow listens for Backspace/Delete at the canvas level to
+          // remove selected nodes — stop those keys from bubbling so typing
+          // in the title doesn't delete the task itself.
+          onKeyDownCapture={(e) => e.stopPropagation()}
+          onBlur={commitTitle}
+          aria-label="Task title"
+        />
       </div>
 
       <div className="dagdo-popover-row">
