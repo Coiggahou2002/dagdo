@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-04-21
+
 - Alpha publish workflow now leaves a sticky comment on the associated PR with the `npm i -g @coiggahou2002/dagdo@<version>` command for the just-published alpha. The comment updates in place on every subsequent push, so reviewers can install and smoke-test a branch without hunting through run logs for the version string.
 - Fix `check-label` CI so labels added after PR open take effect — the workflow now also triggers on `labeled` / `unlabeled` events instead of reading a stale payload from the PR-open event. Label-only events skip the `test` job to save runner time; `check-label` itself no longer runs in merge-queue contexts where there is no `pull_request` payload.
 
