@@ -465,10 +465,18 @@ export function App() {
       id: draftNodeId(draftId),
       type: "draft",
       position: draft.position,
-      // Non-interactive: users commit via Enter and cancel via Esc/blur, not
+      // Non-interactive: users commit via Enter and cancel via Esc, not
       // by dragging or selecting the placeholder.
       draggable: false,
       selectable: false,
+      // Pre-declare dimensions so React Flow skips the "render invisible,
+      // measure, then unhide" dance. Without this, the draft stays
+      // visibility:hidden forever: the measurement change lands in
+      // onNodesChange, but applyNodeChanges is running against `nodes`
+      // state (which does not contain the draft) and silently drops it,
+      // so the node is never un-hidden and its input can't receive focus
+      // or pointer events.
+      measured: { width: NODE_WIDTH, height: NODE_HEIGHT },
       data: {
         onCommit: (title: string) => void handleDraftCommit(draftId, draft.position, title),
         onCancel: () => handleDraftCancel(draftId),

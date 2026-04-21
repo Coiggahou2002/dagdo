@@ -60,12 +60,12 @@ function DraftNodeImpl(props: NodeProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={handleKeyDown}
-          // React Flow listens for Backspace/Delete at the canvas level to
-          // remove selected nodes — stop capture-phase listeners from seeing
-          // keys typed into the draft input.
-          onKeyDownCapture={(e) => e.stopPropagation()}
           // Belt: prevent the pane's mousedown handler from stealing focus
-          // on the click that focuses this input.
+          // on the click that focuses this input. React Flow's own
+          // `isInputDOMNode` check already suppresses its window-level
+          // keyboard shortcuts (Backspace/Delete) when an input is focused,
+          // so no capture-phase stopPropagation is needed — and it would
+          // actively break onKeyDown bubble handling on this element.
           onMouseDown={(e) => e.stopPropagation()}
         />
       </div>
