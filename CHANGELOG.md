@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-04-21
+
 - Redraw README hero graph in the Linear palette with a richer 10-task topology (2 done roots → 2 ready → 4 blocked → integration hub → release), replacing the 4-task Slate-themed placeholder. Regenerate via `bun run scripts/gen-hero.ts > docs/hero.svg`.
 - Update Mermaid theme for `dagdo graph --png` to match: white cards with indigo `#5e6ad2` ready nodes, muted-panel done nodes, `system-ui` font.
 
