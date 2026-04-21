@@ -171,6 +171,17 @@ body,
   min-height: 0;
 }
 
+/* Space-held pan mode: show a grab cursor over the canvas surface and a
+   grabbing cursor while a pan drag is active. We target the React Flow pane
+   directly so node interiors (text, buttons) keep their own cursors. */
+.dagdo-canvas.is-space-down .react-flow__pane {
+  cursor: grab;
+}
+
+.dagdo-canvas.is-space-down .react-flow__pane:active {
+  cursor: grabbing;
+}
+
 /* ─── node ─────────────────────────────────────────────────────────── */
 
 .dagdo-node-body {
@@ -320,30 +331,31 @@ body,
   background: var(--ready);
 }
 
-/* ─── property panel ───────────────────────────────────────────────── */
+/* ─── task popover ────────────────────────────────────────────────── */
 
-.dagdo-panel {
-  width: 300px;
-  min-width: 300px;
-  max-width: 300px;
-  border-left: 1px solid var(--border);
+.dagdo-popover {
+  width: 260px;
+  max-width: 260px;
   background: var(--surface);
-  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-elevated);
   display: flex;
   flex-direction: column;
   font-size: 13px;
   letter-spacing: -0.17px;
+  overflow: hidden;
 }
 
-.dagdo-panel-head {
+.dagdo-popover-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border);
 }
 
-.dagdo-panel-title {
+.dagdo-popover-title {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 400;
@@ -352,128 +364,111 @@ body,
   color: var(--subtle);
 }
 
-.dagdo-panel-close {
+.dagdo-popover-close {
   background: transparent;
   border: none;
   font-size: 14px;
   color: var(--muted);
   cursor: pointer;
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 4px;
   line-height: 1;
   transition: background 120ms ease;
 }
 
-.dagdo-panel-close:hover {
+.dagdo-popover-close:hover {
   background: var(--panel);
   color: var(--text);
 }
 
-.dagdo-panel-row {
-  padding: 14px 16px;
+.dagdo-popover-row {
+  padding: 10px 12px;
   border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
-.dagdo-panel-label {
+.dagdo-popover-label {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--subtle);
   font-weight: 400;
 }
 
-.dagdo-panel-value {
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.18px;
-}
-
-.dagdo-panel-title-readonly {
-  word-break: break-word;
-  white-space: pre-wrap;
-}
-
-.dagdo-panel-hint {
-  font-size: 12px;
+.dagdo-popover-hint {
+  font-size: 11px;
   color: var(--subtle);
   letter-spacing: -0.15px;
 }
 
-.dagdo-panel-id {
+.dagdo-popover-id {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0;
 }
 
-.dagdo-panel-created {
-  font-size: 13px;
-  font-weight: 400;
-}
-
-.dagdo-panel-segmented {
+.dagdo-popover-segmented {
   display: flex;
   border: 1px solid var(--border-strong);
   border-radius: 6px;
   overflow: hidden;
 }
 
-.dagdo-panel-seg {
+.dagdo-popover-seg {
   flex: 1;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   background: var(--surface);
   color: var(--text);
   border: none;
   border-right: 1px solid var(--border-strong);
-  padding: 8px 0;
+  padding: 6px 0;
   cursor: pointer;
   text-transform: capitalize;
   letter-spacing: -0.15px;
   transition: background 120ms ease;
 }
 
-.dagdo-panel-seg:last-child {
+.dagdo-popover-seg:last-child {
   border-right: none;
 }
 
-.dagdo-panel-seg:hover:not(.is-active) {
+.dagdo-popover-seg:hover:not(.is-active) {
   background: var(--panel);
 }
 
-.dagdo-panel-seg.is-active {
+.dagdo-popover-seg.is-active {
   background: var(--ready);
   color: var(--ready-fg);
 }
 
-.dagdo-panel-seg-high::before {
+.dagdo-popover-seg-high::before {
   content: "● ";
   color: var(--pri-high);
 }
-.dagdo-panel-seg-med::before {
+.dagdo-popover-seg-med::before {
   content: "● ";
   color: var(--pri-med);
 }
-.dagdo-panel-seg-low::before {
+.dagdo-popover-seg-low::before {
   content: "● ";
   color: var(--pri-low);
 }
-.dagdo-panel-seg.is-active::before {
+.dagdo-popover-seg.is-active::before {
   color: var(--ready-fg);
 }
 
-.dagdo-panel-tags {
+.dagdo-popover-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
-.dagdo-panel-empty {
+.dagdo-popover-empty {
   font-size: 12px;
   color: var(--subtle);
 }
@@ -506,25 +501,25 @@ body,
   color: var(--destructive);
 }
 
-.dagdo-panel-input {
+.dagdo-popover-input {
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 12px;
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--border-strong);
   border-radius: 6px;
-  padding: 8px 12px;
+  padding: 6px 10px;
   outline: none;
   letter-spacing: -0.17px;
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
-.dagdo-panel-input:focus {
+.dagdo-popover-input:focus {
   border-color: var(--accent);
   box-shadow: var(--focus-ring);
 }
 
-.dagdo-panel-checkbox {
+.dagdo-popover-checkbox {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -532,35 +527,37 @@ body,
   user-select: none;
 }
 
-.dagdo-panel-checkbox input {
+.dagdo-popover-checkbox input {
   cursor: pointer;
   width: 14px;
   height: 14px;
   accent-color: var(--ready);
 }
 
-.dagdo-panel-footer {
-  margin-top: auto;
-  padding: 14px 16px;
+.dagdo-popover-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
   border-top: 1px solid var(--border);
 }
 
-.dagdo-panel-delete {
-  width: 100%;
+.dagdo-popover-delete {
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   background: var(--surface);
   color: var(--destructive);
   border: 1px solid var(--border-strong);
   border-radius: 6px;
-  padding: 10px;
+  padding: 6px 10px;
   cursor: pointer;
   letter-spacing: -0.17px;
   transition: background 120ms ease, border-color 120ms ease;
 }
 
-.dagdo-panel-delete:hover {
+.dagdo-popover-delete:hover {
   background: var(--destructive-bg);
   border-color: var(--destructive);
 }

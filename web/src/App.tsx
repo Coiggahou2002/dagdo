@@ -12,6 +12,7 @@ import {
   type NodeChange,
   type EdgeChange,
   type NodeTypes,
+  type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { layoutGraph } from "./layout";
@@ -25,7 +26,6 @@ import {
   type TaskPatch,
 } from "./api";
 import { TaskNode, type TaskNodeData } from "./TaskNode";
-import { PropertyPanel } from "./PropertyPanel";
 import type { GraphData } from "./types";
 
 const EMPTY: GraphData = { version: 1, tasks: [], edges: [] };
@@ -35,6 +35,21 @@ type Toast = { kind: "error" | "info"; text: string } | null;
 
 const NODE_TYPES: NodeTypes = { task: TaskNode };
 
+// macOS uses Cmd (metaKey) to mirror Figma/Sketch; every other platform uses Ctrl.
+// Detection runs once at module load — we deliberately don't react to changes.
+const IS_MAC =
+  typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/i.test(navigator.platform);
+
+function hasCreateModifier(event: { metaKey: boolean; ctrlKey: boolean }): boolean {
+  return IS_MAC ? event.metaKey : event.ctrlKey;
+}
+
+// While Space is held: include left-mouse (button 0) so left-drag pans the
+// viewport. Default keeps middle/right only, leaving plain left-drag free
+// for future box-selection or other gestures.
+const PAN_BUTTONS_DEFAULT: number[] = [1, 2];
+const PAN_BUTTONS_SPACE: number[] = [0, 1, 2];
+
 export function App() {
   const [graph, setGraph] = useState<GraphData>(EMPTY);
   const [status, setStatus] = useState<Status>("loading");
@@ -43,10 +58,22 @@ export function App() {
   const [edges, setEdges] = useState<FlowEdge[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // IDs of nodes the user has manually dragged — their positions should survive
-  // SSE-driven rebuilds rather than snapping back to the dagre layout. Pristine
-  // nodes pick up fresh dagre coordinates each time the topology changes.
+  // IDs of nodes the user has manually dragged or placed via Cmd/Ctrl+click —
+  // their positions should survive SSE-driven rebuilds rather than snapping back
+  // to the dagre layout. Pristine nodes pick up fresh dagre coordinates each time
+  // the topology changes.
   const userPositioned = useRef(new Set<string>());
+
+  // React Flow instance (captured via onInit). Needed for screenToFlowPosition
+  // so Cmd/Ctrl+click can translate a viewport pixel coordinate back into the
+  // flow's world coordinate system, regardless of current pan/zoom.
+  const flowRef = useRef<ReactFlowInstance<FlowNode<TaskNodeData>, FlowEdge> | null>(null);
+
+  // True while the user holds Space. Gated here rather than in CSS because
+  // React Flow's `panOnDrag` prop needs the live value — CSS alone can't toggle
+  // pan behavior. Reset on window blur so releasing Space outside the window
+  // doesn't leave the canvas stuck in pan mode.
+  const [isSpaceDown, setIsSpaceDown] = useState(false);
 
   // ─── data layer: fetch initial + subscribe to SSE ────────────────────
   useEffect(() => {
@@ -92,6 +119,17 @@ export function App() {
     });
   }, []);
 
+  const handleDelete = useCallback((id: string) => {
+    deleteTask(id).catch((err: unknown) => {
+      showToast({ kind: "error", text: formatError("Delete failed", err) });
+    });
+    setSelectedId((sel) => (sel === id ? null : sel));
+  }, []);
+
+  const handleClosePopover = useCallback(() => {
+    setSelectedId(null);
+  }, []);
+
   // ─── reconcile Flow state whenever server state changes ──────────────
   useEffect(() => {
     const autoLayout = layoutGraph(graph.tasks, graph.edges);
@@ -116,6 +154,9 @@ export function App() {
             task,
             state: auto?.state ?? "blocked",
             onRename: handleRename,
+            onPatch: handlePatch,
+            onDelete: handleDelete,
+            onClosePopover: handleClosePopover,
           },
           // Draggable always; deletable via backspace/delete.
           draggable: true,
@@ -129,7 +170,7 @@ export function App() {
       if (!aliveIds.has(id)) userPositioned.current.delete(id);
     }
     // If the selected task was removed elsewhere, drop the selection so the
-    // panel closes rather than lingering on stale data.
+    // popover closes rather than lingering on stale data.
     if (selectedId && !aliveIds.has(selectedId)) {
       setSelectedId(null);
     }
@@ -149,7 +190,7 @@ export function App() {
         };
       }),
     );
-  }, [graph, handleRename, selectedId]);
+  }, [graph, handleRename, handlePatch, handleDelete, handleClosePopover, selectedId]);
 
   // ─── React Flow event handlers ───────────────────────────────────────
   const onNodesChange = useCallback((changes: NodeChange[]) => {
@@ -203,8 +244,109 @@ export function App() {
     [],
   );
 
-  const onPaneClick = useCallback(() => {
-    setSelectedId(null);
+  const onPaneClick = useCallback(
+    (event: React.MouseEvent) => {
+      // Cmd (macOS) / Ctrl (elsewhere) + click on empty pane creates a new
+      // task exactly at the click position. Plain click still clears selection.
+      if (hasCreateModifier(event)) {
+        const flow = flowRef.current;
+        if (!flow) return;
+        const position = flow.screenToFlowPosition({ x: event.clientX, y: event.clientY });
+        void createTaskAtPosition(position);
+        return;
+      }
+      setSelectedId(null);
+    },
+    // createTaskAtPosition is defined below and is stable (useCallback)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  // Creates a task via the API and immediately pins its position to the click
+  // point (option 2 from the design doc — no backend schema change required).
+  // The node is marked `userPositioned` before the SSE broadcast arrives, so
+  // when the reconcile effect maps server state to Flow nodes it preserves the
+  // coordinate instead of handing the task to dagre.
+  const createTaskAtPosition = useCallback(
+    async (position: { x: number; y: number }) => {
+      const title = window.prompt("New task title:");
+      if (title == null) return;
+      const trimmed = title.trim();
+      if (trimmed.length === 0) return;
+      try {
+        const task = await createTask({ title: trimmed });
+        userPositioned.current.add(task.id);
+        // Seed the node locally so it renders at the click point even before
+        // the SSE broadcast arrives. The reconcile effect will merge it with
+        // server state and preserve this position (userPositioned is set).
+        setNodes((current) => {
+          if (current.some((n) => n.id === task.id)) return current;
+          return [
+            ...current,
+            {
+              id: task.id,
+              type: "task",
+              position,
+              selected: false,
+              draggable: true,
+              data: {
+                task,
+                state: "ready",
+                onRename: handleRename,
+                onPatch: handlePatch,
+                onDelete: handleDelete,
+                onClosePopover: handleClosePopover,
+              },
+            },
+          ];
+        });
+        showToast({ kind: "info", text: `Added "${task.title}"` });
+      } catch (err) {
+        showToast({ kind: "error", text: formatError("Add failed", err) });
+      }
+    },
+    [handleRename, handlePatch, handleDelete, handleClosePopover],
+  );
+
+  const onInit = useCallback(
+    (instance: ReactFlowInstance<FlowNode<TaskNodeData>, FlowEdge>) => {
+      flowRef.current = instance;
+    },
+    [],
+  );
+
+  // Space-held pan mode. Key listeners live on window so the shortcut works
+  // even when focus is on a nested element. We also reset on blur to avoid a
+  // "stuck in pan mode" state if the user releases Space outside the window.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent): void {
+      if (e.code !== "Space") return;
+      // If the user is typing in an input (task title, tag editor, etc.), don't
+      // hijack Space. contentEditable covers the rename input and any future
+      // rich-text fields.
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable) return;
+      }
+      // Prevent the default page-scroll that Space triggers on some browsers.
+      e.preventDefault();
+      setIsSpaceDown(true);
+    }
+    function onKeyUp(e: KeyboardEvent): void {
+      if (e.code === "Space") setIsSpaceDown(false);
+    }
+    function onBlur(): void {
+      setIsSpaceDown(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      window.removeEventListener("blur", onBlur);
+    };
   }, []);
 
   // ─── "add task" button ───────────────────────────────────────────────
@@ -236,10 +378,17 @@ export function App() {
     return { total: graph.tasks.length, done };
   }, [graph]);
 
-  const selectedTask = useMemo(
-    () => (selectedId ? graph.tasks.find((t) => t.id === selectedId) ?? null : null),
-    [selectedId, graph.tasks],
-  );
+  // Esc closes the popover. Bound at the window so the key works regardless of
+  // whether focus is on the canvas or elsewhere; only active while a task is
+  // selected to avoid interfering with other keyboard handling.
+  useEffect(() => {
+    if (!selectedId) return;
+    function onKey(e: KeyboardEvent): void {
+      if (e.key === "Escape") setSelectedId(null);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedId]);
 
   return (
     <div className="dagdo-root">
@@ -271,11 +420,12 @@ export function App() {
             </button>
           </div>
         ) : (
-          <div className="dagdo-canvas">
+          <div className={`dagdo-canvas${isSpaceDown ? " is-space-down" : ""}`}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
               nodeTypes={NODE_TYPES}
+              onInit={onInit}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onNodeDragStop={onNodeDragStop}
@@ -284,6 +434,7 @@ export function App() {
               onNodesDelete={onNodesDelete}
               onNodeClick={onNodeClick}
               onPaneClick={onPaneClick}
+              panOnDrag={isSpaceDown ? PAN_BUTTONS_SPACE : PAN_BUTTONS_DEFAULT}
               fitView
               proOptions={{ hideAttribution: true }}
             >
@@ -294,19 +445,6 @@ export function App() {
           </div>
         )}
 
-        {selectedTask && (
-          <PropertyPanel
-            task={selectedTask}
-            onChange={(patch) => handlePatch(selectedTask.id, patch)}
-            onDelete={() => {
-              deleteTask(selectedTask.id).catch((err: unknown) => {
-                showToast({ kind: "error", text: formatError("Delete failed", err) });
-              });
-              setSelectedId(null);
-            }}
-            onClose={() => setSelectedId(null)}
-          />
-        )}
       </div>
     </div>
   );

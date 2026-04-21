@@ -1,7 +1,7 @@
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { Priority, Task } from "./types";
 
-interface PropertyPanelProps {
+interface TaskPopoverProps {
   task: Task;
   onChange: (patch: { priority?: Priority; tags?: string[]; doneAt?: string | null }) => void;
   onDelete: () => void;
@@ -10,7 +10,12 @@ interface PropertyPanelProps {
 
 const PRIORITIES: Priority[] = ["high", "med", "low"];
 
-export function PropertyPanel({ task, onChange, onDelete, onClose }: PropertyPanelProps) {
+/**
+ * Compact, in-canvas editor for a single task. Rendered inside a React Flow
+ * <NodeToolbar>, so positioning / zoom-tracking is handled upstream — this
+ * component is pure UI.
+ */
+export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverProps) {
   const [tagDraft, setTagDraft] = useState("");
 
   // Reset the tag draft when switching between tasks so input doesn't leak.
@@ -35,34 +40,45 @@ export function PropertyPanel({ task, onChange, onDelete, onClose }: PropertyPan
       e.preventDefault();
       addTag(tagDraft);
     } else if (e.key === "Escape") {
-      setTagDraft("");
+      e.preventDefault();
+      // Let the wrapper's Esc-handler close the popover only if the draft is empty;
+      // otherwise consume Escape to clear the draft.
+      if (tagDraft.length > 0) {
+        e.stopPropagation();
+        setTagDraft("");
+      }
     }
   }
 
   const done = task.doneAt != null;
 
+  // Swallow pointer events so clicks inside the popover don't bubble up to the
+  // React Flow pane handler (which would close the popover via onPaneClick).
+  const stop = (e: MouseEvent) => e.stopPropagation();
+
   return (
-    <aside className="dagdo-panel">
-      <div className="dagdo-panel-head">
-        <span className="dagdo-panel-title">Task</span>
-        <button className="dagdo-panel-close" onClick={onClose} aria-label="Close panel">
+    <div
+      className="dagdo-popover"
+      role="dialog"
+      aria-label={`Edit task ${task.title}`}
+      onClick={stop}
+      onMouseDown={stop}
+      onPointerDown={stop}
+    >
+      <div className="dagdo-popover-head">
+        <span className="dagdo-popover-title">Task</span>
+        <button className="dagdo-popover-close" onClick={onClose} aria-label="Close">
           ✕
         </button>
       </div>
 
-      <div className="dagdo-panel-row">
-        <div className="dagdo-panel-label">Title</div>
-        <div className="dagdo-panel-value dagdo-panel-title-readonly">{task.title}</div>
-        <div className="dagdo-panel-hint">Double-click the node to rename.</div>
-      </div>
-
-      <div className="dagdo-panel-row">
-        <div className="dagdo-panel-label">Priority</div>
-        <div className="dagdo-panel-segmented">
+      <div className="dagdo-popover-row">
+        <div className="dagdo-popover-label">Priority</div>
+        <div className="dagdo-popover-segmented">
           {PRIORITIES.map((p) => (
             <button
               key={p}
-              className={`dagdo-panel-seg ${task.priority === p ? "is-active" : ""} dagdo-panel-seg-${p}`}
+              className={`dagdo-popover-seg ${task.priority === p ? "is-active" : ""} dagdo-popover-seg-${p}`}
               onClick={() => {
                 if (task.priority !== p) onChange({ priority: p });
               }}
@@ -73,9 +89,9 @@ export function PropertyPanel({ task, onChange, onDelete, onClose }: PropertyPan
         </div>
       </div>
 
-      <div className="dagdo-panel-row">
-        <div className="dagdo-panel-label">Tags</div>
-        <div className="dagdo-panel-tags">
+      <div className="dagdo-popover-row">
+        <div className="dagdo-popover-label">Tags</div>
+        <div className="dagdo-popover-tags">
           {task.tags.map((tag) => (
             <span key={tag} className="dagdo-chip">
               {tag}
@@ -88,10 +104,10 @@ export function PropertyPanel({ task, onChange, onDelete, onClose }: PropertyPan
               </button>
             </span>
           ))}
-          {task.tags.length === 0 && <span className="dagdo-panel-empty">no tags</span>}
+          {task.tags.length === 0 && <span className="dagdo-popover-empty">no tags</span>}
         </div>
         <input
-          className="dagdo-panel-input"
+          className="dagdo-popover-input"
           placeholder="add tag (Enter)"
           value={tagDraft}
           onChange={(e) => setTagDraft(e.target.value)}
@@ -100,8 +116,8 @@ export function PropertyPanel({ task, onChange, onDelete, onClose }: PropertyPan
         />
       </div>
 
-      <div className="dagdo-panel-row">
-        <label className="dagdo-panel-checkbox">
+      <div className="dagdo-popover-row">
+        <label className="dagdo-popover-checkbox">
           <input
             type="checkbox"
             checked={done}
@@ -110,22 +126,19 @@ export function PropertyPanel({ task, onChange, onDelete, onClose }: PropertyPan
           <span>Mark as done</span>
         </label>
         {done && task.doneAt && (
-          <div className="dagdo-panel-hint">Completed {formatDate(task.doneAt)}</div>
+          <div className="dagdo-popover-hint">Completed {formatDate(task.doneAt)}</div>
         )}
       </div>
 
-      <div className="dagdo-panel-row">
-        <div className="dagdo-panel-label">Created</div>
-        <div className="dagdo-panel-value dagdo-panel-created">{formatDate(task.createdAt)}</div>
-        <div className="dagdo-panel-hint dagdo-panel-id">{task.id}</div>
-      </div>
-
-      <div className="dagdo-panel-footer">
-        <button className="dagdo-panel-delete" onClick={onDelete}>
-          Delete task
+      <div className="dagdo-popover-footer">
+        <span className="dagdo-popover-hint dagdo-popover-id" title={task.id}>
+          {formatDate(task.createdAt)}
+        </span>
+        <button className="dagdo-popover-delete" onClick={onDelete}>
+          Delete
         </button>
       </div>
-    </aside>
+    </div>
   );
 }
 

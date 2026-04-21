@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- `dagdo ui` replaces the sidebar property panel with a compact popover anchored next to the selected node — less mouse travel for quick edits, stays glued to the node as you pan/zoom, flips from below-node to above when it would overflow the viewport, and dismisses on Esc or by clicking elsewhere. The popover now also lets you rename the task inline (the node's double-click rename still works). (#18)
+- `dagdo ui` adds two canvas shortcuts borrowed from Figma/Sketch: hold Space + left-drag to pan the canvas (grab cursor while held, resets cleanly on blur), and Cmd (macOS) / Ctrl (other platforms) + click on empty canvas to create a new task exactly at the cursor. Holding the modifier previews a dashed ghost where the new node will land; the click drops a draft node at that spot with its title input focused — type, press Enter to commit (Esc to cancel). No more `window.prompt`. (#21)
+
 ## [0.11.2] - 2026-04-21
 
 - Alpha publish workflow now leaves a sticky comment on the associated PR with the `npm i -g @coiggahou2002/dagdo@<version>` command for the just-published alpha. The comment updates in place on every subsequent push, so reviewers can install and smoke-test a branch without hunting through run logs for the version string.
