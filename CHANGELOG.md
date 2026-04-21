@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-04-21
+
 - Restyle `dagdo ui` with a Linear-inspired light theme: indigo CTA (`#5e6ad2` hover `#7170ff`), ring-shadow cards replacing hard 1px borders, 6px radius buttons, chip-style pill tags, and mono uppercase labels for metadata. System UI font (`system-ui` stack) — no web fonts fetched.
 
 ## [0.10.0] - 2026-04-20
