@@ -1,16 +1,41 @@
 :root {
-  /* Warm palette mirrors src/graph/render.ts */
-  --bg: #f5f4ed;
-  --surface: #faf9f5;
-  --border: #e8e6dc;
-  --text: #141413;
-  --muted: #87867f;
-  --ready: #c96442;
-  --ready-fg: #faf9f5;
-  --ready-border: #b5573a;
-  --pri-high: #c96442;
-  --pri-med: #87867f;
-  --pri-low: #c0bdb1;
+  /* ─── Linear-inspired palette (light) ─────────────────────────────── */
+  --bg: #f7f8f8;            /* page */
+  --surface: #ffffff;        /* cards, inputs */
+  --panel: #f3f4f5;          /* subtle filled surface (badges, empty bg) */
+
+  --text: #1a1a1e;           /* primary */
+  --text-secondary: #3c3c43;
+  --muted: #62666d;          /* tertiary */
+  --subtle: #8a8f98;         /* quaternary / placeholder */
+
+  --border: #e6e6e6;         /* subtle divider */
+  --border-strong: #d0d6e0;  /* inputs, buttons */
+
+  /* Linear's signature indigo CTA + hover */
+  --ready: #5e6ad2;
+  --ready-fg: #ffffff;
+  --ready-hover: #7170ff;
+
+  --accent: #7170ff;
+  --accent-rgb: 113, 112, 255;
+  --success: #27a644;
+  --destructive: #e5484d;
+  --destructive-bg: #fdecec;
+
+  --pri-high: #e5484d;
+  --pri-med: #62666d;
+  --pri-low: #8a8f98;
+
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Linear's box-shadow-as-ring system. */
+  --shadow-ring: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+  --shadow-elevated: 0 0 0 1px rgba(0, 0, 0, 0.08), 0 4px 12px 0 rgba(0, 0, 0, 0.06);
+  --focus-ring: 0 0 0 2px rgba(var(--accent-rgb), 0.25);
 }
 
 * {
@@ -23,9 +48,14 @@ body,
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
   color: var(--text);
   background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .dagdo-root {
@@ -41,74 +71,88 @@ body,
   flex-direction: row;
 }
 
+/* ─── header ───────────────────────────────────────────────────────── */
+
 .dagdo-header {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 10px 16px;
+  padding: 12px 20px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
 
 .dagdo-title {
-  font-weight: bold;
-  font-size: 18px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 15px;
+  letter-spacing: -0.3px;
+  color: var(--text);
 }
 
 .dagdo-add-button {
-  font-family: Georgia, serif;
+  font-family: var(--font-body);
   font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.18px;
   background: var(--ready);
   color: var(--ready-fg);
-  border: 1px solid var(--ready-border);
-  border-radius: 4px;
-  padding: 5px 12px;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
   cursor: pointer;
+  transition: background 120ms ease;
 }
 
 .dagdo-add-button:hover {
-  filter: brightness(0.96);
+  background: var(--ready-hover);
 }
 
 .dagdo-stats {
   color: var(--muted);
   font-size: 13px;
   flex: 1;
+  letter-spacing: -0.17px;
 }
 
 .dagdo-status {
-  font-size: 13px;
-  font-family: "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .dagdo-status-connected {
-  color: #4a7c4e;
+  color: var(--success);
 }
-
 .dagdo-status-loading {
-  color: var(--muted);
+  color: var(--subtle);
+}
+.dagdo-status-disconnected {
+  color: var(--destructive);
 }
 
-.dagdo-status-disconnected {
-  color: #c96442;
-}
+/* ─── toast ────────────────────────────────────────────────────────── */
 
 .dagdo-toast {
-  padding: 10px 16px;
+  padding: 10px 20px;
   font-size: 13px;
   cursor: pointer;
   border-bottom: 1px solid var(--border);
+  letter-spacing: -0.17px;
 }
 
 .dagdo-toast-error {
-  background: #fdf0ec;
-  color: #8b3b23;
+  background: var(--destructive-bg);
+  color: #a02e32;
 }
 
 .dagdo-toast-info {
-  background: #eef4ee;
-  color: #2d5a33;
+  background: rgba(39, 166, 68, 0.08);
+  color: #1f7a32;
 }
+
+/* ─── empty state ──────────────────────────────────────────────────── */
 
 .dagdo-empty {
   flex: 1;
@@ -117,7 +161,9 @@ body,
   align-items: center;
   justify-content: center;
   color: var(--muted);
-  gap: 14px;
+  gap: 16px;
+  font-size: 14px;
+  letter-spacing: -0.17px;
 }
 
 .dagdo-canvas {
@@ -129,39 +175,39 @@ body,
 
 .dagdo-node-body {
   position: relative;
-  padding: 10px 14px;
-  border-radius: 6px;
-  font-family: Georgia, serif;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-family: var(--font-body);
   font-size: 13px;
-  line-height: 1.3;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: -0.18px;
   width: 200px;
-  min-height: 44px;
+  min-height: 48px;
   text-align: center;
-  border: 1px solid;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
   background: var(--surface);
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2px;
+  gap: 4px;
+  box-shadow: var(--shadow-card);
 }
 
 .dagdo-node-ready {
   background: var(--ready);
   color: var(--ready-fg);
-  border-color: var(--ready-border);
+  box-shadow: var(--shadow-elevated);
 }
 
 .dagdo-node-blocked {
   background: var(--surface);
   color: var(--text);
-  border-color: var(--border);
 }
 
 .dagdo-node-done {
-  background: #f0eee6;
-  color: var(--muted);
-  border-color: var(--border);
+  background: var(--panel);
+  color: var(--subtle);
+  box-shadow: var(--shadow-ring);
 }
 
 .dagdo-node-done .dagdo-node-title {
@@ -174,27 +220,32 @@ body,
 }
 
 .dagdo-node-tags {
-  font-size: 11px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 400;
   opacity: 0.85;
-  font-style: italic;
 }
 
 .dagdo-node-input {
   width: 100%;
   font-family: inherit;
   font-size: inherit;
-  color: inherit;
+  font-weight: inherit;
+  color: var(--text);
   text-align: center;
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px solid var(--ready-border);
-  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
   padding: 2px 6px;
   outline: none;
+  letter-spacing: inherit;
+  box-shadow: var(--focus-ring);
 }
 
 .dagdo-node-ready .dagdo-node-input {
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--text);
+  background: var(--surface);
 }
 
 /* Priority indicator dot in the top-left corner of the node */
@@ -216,28 +267,26 @@ body,
   background: var(--pri-low);
 }
 
-/* On terracotta (ready) nodes the high-priority dot blends in; inverted to stay
- * visible without screaming. */
 .dagdo-node-ready .dagdo-node-pri-high {
   background: var(--ready-fg);
-  opacity: 0.95;
+  opacity: 1;
 }
 
 .dagdo-node-ready .dagdo-node-pri-med {
   background: var(--ready-fg);
-  opacity: 0.55;
+  opacity: 0.65;
 }
 
 .dagdo-node-ready .dagdo-node-pri-low {
   background: var(--ready-fg);
-  opacity: 0.3;
+  opacity: 0.4;
 }
 
-/* Make React Flow handles a bit more visible/clickable */
+/* React Flow handles */
 .react-flow__handle {
   width: 8px;
   height: 8px;
-  background: var(--muted);
+  background: var(--subtle);
   border: 1px solid var(--surface);
 }
 
@@ -248,28 +297,33 @@ body,
 /* ─── property panel ───────────────────────────────────────────────── */
 
 .dagdo-panel {
-  width: 280px;
-  min-width: 280px;
-  max-width: 280px;
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
   border-left: 1px solid var(--border);
   background: var(--surface);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   font-size: 13px;
+  letter-spacing: -0.17px;
 }
 
 .dagdo-panel-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border);
 }
 
 .dagdo-panel-title {
-  font-weight: bold;
-  letter-spacing: 0.4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--subtle);
 }
 
 .dagdo-panel-close {
@@ -278,32 +332,39 @@ body,
   font-size: 14px;
   color: var(--muted);
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 3px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background 120ms ease;
 }
 
 .dagdo-panel-close:hover {
-  background: var(--bg);
+  background: var(--panel);
   color: var(--text);
 }
 
 .dagdo-panel-row {
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .dagdo-panel-label {
+  font-family: var(--font-mono);
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: var(--muted);
+  letter-spacing: 0.5px;
+  color: var(--subtle);
+  font-weight: 400;
 }
 
 .dagdo-panel-value {
   color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.18px;
 }
 
 .dagdo-panel-title-readonly {
@@ -312,42 +373,51 @@ body,
 }
 
 .dagdo-panel-hint {
-  font-size: 11px;
-  color: var(--muted);
-  font-style: italic;
+  font-size: 12px;
+  color: var(--subtle);
+  letter-spacing: -0.15px;
 }
 
 .dagdo-panel-id {
-  font-family: "SF Mono", Menlo, monospace;
-  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0;
 }
 
 .dagdo-panel-created {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 400;
 }
 
 .dagdo-panel-segmented {
   display: flex;
-  border: 1px solid var(--border);
-  border-radius: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
   overflow: hidden;
 }
 
 .dagdo-panel-seg {
   flex: 1;
-  font-family: Georgia, serif;
+  font-family: var(--font-body);
   font-size: 12px;
+  font-weight: 500;
   background: var(--surface);
   color: var(--text);
   border: none;
-  border-right: 1px solid var(--border);
-  padding: 6px 0;
+  border-right: 1px solid var(--border-strong);
+  padding: 8px 0;
   cursor: pointer;
   text-transform: capitalize;
+  letter-spacing: -0.15px;
+  transition: background 120ms ease;
 }
 
 .dagdo-panel-seg:last-child {
   border-right: none;
+}
+
+.dagdo-panel-seg:hover:not(.is-active) {
+  background: var(--panel);
 }
 
 .dagdo-panel-seg.is-active {
@@ -379,25 +449,27 @@ body,
 
 .dagdo-panel-empty {
   font-size: 12px;
-  color: var(--muted);
-  font-style: italic;
+  color: var(--subtle);
 }
 
 .dagdo-chip {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: 9999px;
   padding: 2px 4px 2px 10px;
   font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  letter-spacing: -0.15px;
 }
 
 .dagdo-chip-remove {
   background: transparent;
   border: none;
-  color: var(--muted);
+  color: var(--subtle);
   cursor: pointer;
   padding: 0 4px;
   font-size: 14px;
@@ -405,22 +477,25 @@ body,
 }
 
 .dagdo-chip-remove:hover {
-  color: var(--ready);
+  color: var(--destructive);
 }
 
 .dagdo-panel-input {
-  font-family: Georgia, serif;
-  font-size: 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 5px 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 8px 12px;
   outline: none;
+  letter-spacing: -0.17px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 .dagdo-panel-input:focus {
-  border-color: var(--ready-border);
-  background: var(--surface);
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
 }
 
 .dagdo-panel-checkbox {
@@ -435,26 +510,31 @@ body,
   cursor: pointer;
   width: 14px;
   height: 14px;
+  accent-color: var(--ready);
 }
 
 .dagdo-panel-footer {
   margin-top: auto;
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-top: 1px solid var(--border);
 }
 
 .dagdo-panel-delete {
   width: 100%;
-  font-family: Georgia, serif;
-  font-size: 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
   background: var(--surface);
-  color: #8b3b23;
-  border: 1px solid #e4c9bd;
-  border-radius: 4px;
-  padding: 7px;
+  color: var(--destructive);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 10px;
   cursor: pointer;
+  letter-spacing: -0.17px;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
 .dagdo-panel-delete:hover {
-  background: #fdf0ec;
+  background: var(--destructive-bg);
+  border-color: var(--destructive);
 }
