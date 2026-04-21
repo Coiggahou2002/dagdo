@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Restyle `dagdo ui` with a Linear-inspired light theme: indigo CTA (`#5e6ad2` hover `#7170ff`), ring-shadow cards replacing hard 1px borders, 6px radius buttons, chip-style pill tags, and mono uppercase labels for metadata. System UI font (`system-ui` stack) — no web fonts fetched.
+
 ## [0.10.0] - 2026-04-20
 
 - `dagdo ui` gains a property panel: click a node to open a sidebar with priority selector (high/med/low), tag chips with add/remove, a "mark as done" checkbox, and a delete button for discoverability. Each node now also shows a small priority dot so the canvas remains scannable with the panel closed. (#8 stage 3 — closes #8)

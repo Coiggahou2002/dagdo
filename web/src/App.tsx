@@ -144,8 +144,8 @@ export function App() {
           target: e.to,
           animated: false,
           style: dashed
-            ? { strokeDasharray: "4 4", stroke: "#b5ada0" }
-            : { stroke: "#87867f" },
+            ? { strokeDasharray: "4 4", stroke: "#8a8f98" }
+            : { stroke: "#62666d" },
         };
       }),
     );
@@ -287,9 +287,9 @@ export function App() {
               fitView
               proOptions={{ hideAttribution: true }}
             >
-              <Background color="#e8e6dc" gap={20} />
+              <Background color="#e6e6e6" gap={20} />
               <Controls showInteractive={false} />
-              <MiniMap pannable zoomable maskColor="rgba(245, 244, 237, 0.7)" />
+              <MiniMap pannable zoomable maskColor="rgba(247, 248, 248, 0.7)" />
             </ReactFlow>
           </div>
         )}
