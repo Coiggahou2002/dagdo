@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Alpha publish workflow now leaves a sticky comment on the associated PR with the `npm i -g @coiggahou2002/dagdo@<version>` command for the just-published alpha. The comment updates in place on every subsequent push, so reviewers can install and smoke-test a branch without hunting through run logs for the version string.
+- Fix `check-label` CI so labels added after PR open take effect — the workflow now also triggers on `labeled` / `unlabeled` events instead of reading a stale payload from the PR-open event. Label-only events skip the `test` job to save runner time; `check-label` itself no longer runs in merge-queue contexts where there is no `pull_request` payload.
+
 ## [0.11.1] - 2026-04-21
 
 - `dagdo ui` now has a 20×20 hit area around each node connection handle (visible dot still 8×8), making it much easier to start a manual edge drag — especially on trackpads and high-DPI displays. Adjacent-rank zones stay well clear with dagre's 70px ranksep, and the node body's double-click-to-edit remains reliable. (#19)
