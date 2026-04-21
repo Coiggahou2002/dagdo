@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-04-21
+
 - `dagdo ui` now lays out each disconnected subgraph in its own region, packing connected components left-to-right with a 120px gap instead of letting dagre fuse them into one oddly-shaped blob. Component order is stable (size desc, then lex-smallest task id), so adding or removing a node in one component no longer reshuffles the others. (#20)
 
 ## [0.10.3] - 2026-04-21
