@@ -22,6 +22,9 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      # Needed to post/update the sticky "alpha published" comment on the
+      # associated PR.
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -32,14 +35,73 @@ jobs:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
       - name: Set alpha version
+        id: version
         run: |
           SHORT_SHA=$(git rev-parse --short HEAD)
           BASE_VERSION=$(node -p "require('./package.json').version")
           ALPHA_VERSION="${BASE_VERSION}-alpha.${SHORT_SHA}"
           npm version "$ALPHA_VERSION" --no-git-tag-version
+          echo "alpha=$ALPHA_VERSION" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
           echo "Publishing alpha: $ALPHA_VERSION"
       - run: bun run build:web
       - run: npm install --ignore-scripts
       - run: npm publish --tag alpha --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Comment install command on associated PR
+        if: success()
+        uses: actions/github-script@v7
+        env:
+          ALPHA_VERSION: ${{ steps.version.outputs.alpha }}
+          SHORT_SHA: ${{ steps.version.outputs.short_sha }}
+        with:
+          script: |
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+            });
+            const openPR = prs.find((p) => p.state === 'open');
+            if (!openPR) {
+              core.info('No open PR is associated with this commit yet; skipping comment. It will appear on the next push after the PR is opened.');
+              return;
+            }
+            // Sticky marker — identifies our comment on subsequent pushes so
+            // we update in place instead of spamming one per push.
+            const marker = '<!-- alpha-install-sticky -->';
+            const pkg = require('./package.json').name;
+            const body = [
+              marker,
+              `🧪 **Alpha published** from \`${process.env.SHORT_SHA}\``,
+              '',
+              '```',
+              `npm i -g ${pkg}@${process.env.ALPHA_VERSION}`,
+              '```',
+              '',
+              '_Re-pushing this branch updates the alpha; this comment updates in place._',
+            ].join('\n');
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: openPR.number,
+              per_page: 100,
+            });
+            const existing = comments.find((c) => c.body && c.body.startsWith(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+              core.info(`Updated sticky comment ${existing.id} on PR #${openPR.number}.`);
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: openPR.number,
+                body,
+              });
+              core.info(`Posted sticky comment on PR #${openPR.number}.`);
+            }

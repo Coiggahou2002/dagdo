@@ -3,11 +3,21 @@ name: CI
 on:
   pull_request:
     branches: [main]
+    # Also fire on label changes so `check-label` re-runs against the current
+    # labels — otherwise it reads a stale payload from the initial PR-open
+    # event and stays failed even after the label is added.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
   merge_group:
     branches: [main]
 
 jobs:
   test:
+    # Label-only events don't touch code, so skip the expensive test job.
+    if: >-
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' &&
+       github.event.action != 'labeled' &&
+       github.event.action != 'unlabeled')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,6 +29,8 @@ jobs:
       - run: bun test
 
   check-label:
+    # merge_group events have no pull_request payload; the script would crash.
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Require version label
