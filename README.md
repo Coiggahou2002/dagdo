@@ -129,7 +129,7 @@ Tasks are stored in `~/.dagdo/data.json` — one user-level todo list across all
 **Canvas shortcuts:**
 
 - **Space + left-drag** — pan the canvas (grab cursor while held; borrowed from Figma/Sketch)
-- **Cmd + click** (macOS) / **Ctrl + click** (other platforms) on empty canvas — create a new task exactly at the click point
+- **Option + click** (macOS) / **Alt + click** (other platforms) on empty canvas — create a new task exactly at the click point
 - **Esc** — dismiss the popover
 
 ```bash

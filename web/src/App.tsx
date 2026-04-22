@@ -36,13 +36,11 @@ type Toast = { kind: "error" | "info"; text: string } | null;
 
 const NODE_TYPES: NodeTypes = { task: TaskNode, draft: DraftNode };
 
-// macOS uses Cmd (metaKey) to mirror Figma/Sketch; every other platform uses Ctrl.
-// Detection runs once at module load — we deliberately don't react to changes.
-const IS_MAC =
-  typeof navigator !== "undefined" && /Mac|iPhone|iPad|iPod/i.test(navigator.platform);
-
-function hasCreateModifier(event: { metaKey: boolean; ctrlKey: boolean }): boolean {
-  return IS_MAC ? event.metaKey : event.ctrlKey;
+// Option (macOS) / Alt (everywhere else) — same `altKey` on every platform, no
+// branching needed. Chosen over Cmd/Ctrl to stay out of the way of the
+// browser's Cmd/Ctrl + scroll-to-zoom gesture on the canvas.
+function hasCreateModifier(event: { altKey: boolean }): boolean {
+  return event.altKey;
 }
 
 // While Space is held: include left-mouse (button 0) so left-drag pans the
@@ -72,14 +70,14 @@ export function App() {
   const [edges, setEdges] = useState<FlowEdge[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // IDs of nodes the user has manually dragged or placed via Cmd/Ctrl+click —
+  // IDs of nodes the user has manually dragged or placed via Option/Alt+click —
   // their positions should survive SSE-driven rebuilds rather than snapping back
   // to the dagre layout. Pristine nodes pick up fresh dagre coordinates each time
   // the topology changes.
   const userPositioned = useRef(new Set<string>());
 
   // React Flow instance (captured via onInit). Needed for screenToFlowPosition
-  // so Cmd/Ctrl+click can translate a viewport pixel coordinate back into the
+  // so Option/Alt+click can translate a viewport pixel coordinate back into the
   // flow's world coordinate system, regardless of current pan/zoom. The
   // generic widens to the union because `<ReactFlow nodes={allNodes}>` infers
   // its node type from the passed nodes, which include an optional draft.
@@ -279,7 +277,7 @@ export function App() {
 
   const onPaneClick = useCallback(
     (event: React.MouseEvent) => {
-      // Cmd (macOS) / Ctrl (elsewhere) + click on empty pane drops a "draft"
+      // Option (macOS) / Alt (elsewhere) + click on empty pane drops a "draft"
       // node at the click point. The node body auto-focuses its title input;
       // Enter inside the draft commits, Esc/blur cancels. A second Cmd+click
       // while a draft is already open replaces it with one at the new spot.
@@ -409,7 +407,7 @@ export function App() {
       // Clear the ghost immediately on modifier release — onPaneMouseMove is
       // only sampled on movement, so without this the ghost would linger until
       // the next mousemove event.
-      if (!e.metaKey && !e.ctrlKey) setGhost(null);
+      if (!e.altKey) setGhost(null);
     }
     function onBlur(): void {
       setIsSpaceDown(false);

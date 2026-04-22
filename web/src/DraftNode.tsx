@@ -7,7 +7,7 @@ export interface DraftNodeData extends Record<string, unknown> {
 }
 
 /**
- * Placeholder node rendered at a Cmd/Ctrl+click point. Auto-focuses its title
+ * Placeholder node rendered at an Option/Alt+click point. Auto-focuses its title
  * input; Enter commits (creating the real task), Esc cancels. Clicking
  * elsewhere blurs the input but leaves the draft on-canvas — users can click
  * the input again to resume typing. Positioning and NODE_TYPES registration
