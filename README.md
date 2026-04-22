@@ -124,7 +124,13 @@ Tasks are stored in `~/.dagdo/data.json` — one user-level todo list across all
 
 ## Web view
 
-`dagdo ui` starts a local HTTP server on `http://localhost:3737`, opens your browser, and renders an interactive task graph. CLI changes from other terminals appear within a second; the browser can also edit: drag nodes to rearrange, drag from one node's bottom handle to another's top to create a dependency (with cycle detection), select a node/edge and press `Delete` to remove it, double-click a node title to rename it, and use the **+ New task** button in the header to add one. Click a node to open the property panel on the right — change priority, add/remove tags, or mark the task done.
+`dagdo ui` starts a local HTTP server on `http://localhost:3737`, opens your browser, and renders an interactive task graph. CLI changes from other terminals appear within a second; the browser can also edit: drag nodes to rearrange, drag from one node's bottom handle to another's top to create a dependency (with cycle detection), select a node/edge and press `Delete` to remove it, double-click a node title to rename it, and use the **+ New task** button in the header to add one. Click a node to open a compact popover anchored next to it — change priority, add/remove tags, or mark the task done.
+
+**Canvas shortcuts:**
+
+- **Space + left-drag** — pan the canvas (grab cursor while held; borrowed from Figma/Sketch)
+- **Option + click** (macOS) / **Alt + click** (other platforms) on empty canvas — create a new task exactly at the click point
+- **Esc** — dismiss the popover
 
 ```bash
 dagdo ui                  # default port 3737, opens a browser tab
