@@ -169,12 +169,18 @@ async function handleUpdateTask(
   if (isPriority(b.priority)) patch.priority = b.priority;
   if (Array.isArray(b.tags)) patch.tags = b.tags.filter((t): t is string => typeof t === "string");
   if (b.doneAt === null || typeof b.doneAt === "string") patch.doneAt = b.doneAt;
+  if (b.notes === null || typeof b.notes === "string") patch.notes = b.notes;
 
   if (Object.keys(patch).length === 0) return sendJson(res, 400, { error: "empty_patch" });
 
   const graph = await loadGraph();
   const result = updateTask(graph, id, patch);
-  if (!result.ok) return sendJson(res, 404, { error: result.error });
+  if (!result.ok) {
+    if (result.error === "note_too_long") {
+      return sendJson(res, 400, { error: result.error, limit: result.limit });
+    }
+    return sendJson(res, 404, { error: result.error });
+  }
 
   await saveGraph(result.data, `edit: ${result.task.title}`);
   broadcast();

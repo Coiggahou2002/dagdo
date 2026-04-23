@@ -9,6 +9,7 @@ export interface Task {
   tags: string[];
   createdAt: string;
   doneAt: string | null;
+  notes?: string;
 }
 
 export interface Edge {

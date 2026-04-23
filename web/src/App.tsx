@@ -577,6 +577,8 @@ function formatError(prefix: string, err: unknown): string {
         return `${prefix}: a task can't depend on itself.`;
       case "task_not_found":
         return `${prefix}: task not found (maybe it was just deleted).`;
+      case "note_too_long":
+        return `${prefix}: note is too long (max 2000 characters).`;
       default:
         return `${prefix}: ${err.message}`;
     }

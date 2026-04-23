@@ -19,6 +19,8 @@ ${pc.bold("Commands:")}
       --priority, -p <high|med|low>  Change priority
       --tag, -t <tag>                Add tag
       --untag <tag>                  Remove tag
+      --note <text>                  Set note (plain text, max 2000 chars)
+      --clear-note                   Clear the note
 
   ${pc.cyan("list")} [options]              List tasks (alias: ls)
       --all                          Include done tasks

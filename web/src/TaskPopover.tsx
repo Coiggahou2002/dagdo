@@ -3,12 +3,23 @@ import type { Priority, Task } from "./types";
 
 interface TaskPopoverProps {
   task: Task;
-  onChange: (patch: { title?: string; priority?: Priority; tags?: string[]; doneAt?: string | null }) => void;
+  onChange: (patch: {
+    title?: string;
+    priority?: Priority;
+    tags?: string[];
+    doneAt?: string | null;
+    notes?: string | null;
+  }) => void;
   onDelete: () => void;
   onClose: () => void;
 }
 
 const PRIORITIES: Priority[] = ["high", "med", "low"];
+
+// Matches server-side `NOTES_MAX_CHARS` in src/graph/mutations.ts. The textarea
+// also enforces it via `maxLength`, so users get the native browser hint
+// before any network round-trip.
+const NOTES_MAX_CHARS = 2000;
 
 /**
  * Compact, in-canvas editor for a single task. Rendered inside a React Flow
@@ -18,12 +29,23 @@ const PRIORITIES: Priority[] = ["high", "med", "low"];
 export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverProps) {
   const [tagDraft, setTagDraft] = useState("");
   const [titleDraft, setTitleDraft] = useState(task.title);
+  const [notesDraft, setNotesDraft] = useState(task.notes ?? "");
 
   // Reset input drafts when switching between tasks so nothing leaks across.
   useEffect(() => {
     setTagDraft("");
     setTitleDraft(task.title);
-  }, [task.id, task.title]);
+    setNotesDraft(task.notes ?? "");
+  }, [task.id, task.title, task.notes]);
+
+  function commitNotes(): void {
+    const next = notesDraft;
+    const current = task.notes ?? "";
+    if (next === current) return;
+    // Empty → null so the server/mutations path drops the field entirely
+    // rather than persisting `"notes": ""`.
+    onChange({ notes: next.length === 0 ? null : next });
+  }
 
   function commitTitle(): void {
     const next = titleDraft.trim();
@@ -77,11 +99,15 @@ export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverPr
 
   // Swallow pointer events so clicks inside the popover don't bubble up to the
   // React Flow pane handler (which would close the popover via onPaneClick).
+  // `nowheel` tells React Flow's native wheel handler to ignore scroll events
+  // originating inside this element — without it, scrolling the notes textarea
+  // zooms the canvas. (React synthetic `onWheel` + stopPropagation doesn't
+  // work because React Flow listens at the native DOM level, not via React.)
   const stop = (e: MouseEvent) => e.stopPropagation();
 
   return (
     <div
-      className="dagdo-popover"
+      className="dagdo-popover nowheel"
       role="dialog"
       aria-label={`Edit task ${task.title}`}
       onClick={stop}
@@ -152,6 +178,23 @@ export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverPr
           onChange={(e) => setTagDraft(e.target.value)}
           onKeyDown={onTagKeyDown}
           onBlur={() => addTag(tagDraft)}
+        />
+      </div>
+
+      <div className="dagdo-popover-row">
+        <div className="dagdo-popover-label">Notes</div>
+        <textarea
+          className="dagdo-popover-textarea"
+          placeholder="Plain text — acceptance criteria, a link, why this task exists…"
+          value={notesDraft}
+          maxLength={NOTES_MAX_CHARS}
+          onChange={(e) => setNotesDraft(e.target.value)}
+          // React Flow listens for Backspace/Delete at the canvas level to
+          // remove selected nodes — stop those keys from bubbling so typing
+          // in notes doesn't delete the task itself.
+          onKeyDownCapture={(e) => e.stopPropagation()}
+          onBlur={commitNotes}
+          aria-label="Task notes"
         />
       </div>
 
