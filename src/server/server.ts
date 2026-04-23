@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "http";
 import { existsSync, readFileSync, statSync } from "fs";
+import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { globalDataFile, loadGraph, saveGraph } from "../storage";
 import {
@@ -13,10 +14,13 @@ import {
 } from "../graph/mutations";
 import type { GraphData, Priority } from "../types";
 
-// Resolves to <repo-root>/dist/web/index.html in both dev (bun run src/cli.ts)
-// and installed (node_modules/@coiggahou2002/dagdo/...) layouts — src/server/
-// is always two levels above the dist/web sibling.
-const UI_HTML_PATH = fileURLToPath(new URL("../../dist/web/index.html", import.meta.url));
+// Bundled (node dist/cli.js): import.meta.url → dist/cli.js, sibling is dist/web/
+// Source  (bun run src/cli.ts): import.meta.url → src/server/server.ts, two levels up
+const selfDir = dirname(fileURLToPath(import.meta.url));
+const UI_HTML_PATH = [
+  resolve(selfDir, "web", "index.html"),
+  resolve(selfDir, "..", "..", "dist", "web", "index.html"),
+].find(existsSync) ?? resolve(selfDir, "web", "index.html");
 
 export interface StartedServer {
   url: string;
