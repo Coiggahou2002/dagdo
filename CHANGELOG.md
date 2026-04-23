@@ -4,6 +4,8 @@
 
 - Alpha workflow skips test + publish when a push only touches workflow files, markdown, docs, LICENSE, or skills — avoids wasting CI minutes and publishing identical alpha packages. (#28)
 
+## [0.14.2] - 2026-04-23
+
 ## [0.14.1] - 2026-04-23
 
 - README: fix stale `dagdo done` / `dagdo next` example output to match actual CLI format, update Features list (add notes, web view, cloud sync, dark mode), fix `dagdo ui` command description, and restructure into "For Humans" / "For Agents" sections with the Claude Code skill install and usage guidance in its own section. (#30)
