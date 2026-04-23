@@ -1,6 +1,6 @@
 # dagdo
 
-[English](README.md) | [中文](README.zh-CN.md)
+[English](README.md) | 中文
 
 依赖感知的任务管理器。任务构成一个 DAG（有向无环图）——拓扑排序告诉你下一步该做什么。
 
