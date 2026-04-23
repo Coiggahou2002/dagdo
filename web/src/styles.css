@@ -571,8 +571,8 @@ body,
   outline: none;
   letter-spacing: -0.17px;
   transition: border-color 120ms ease, box-shadow 120ms ease;
-  min-height: 4.5em;
-  max-height: 12em;
+  min-height: 9em;
+  max-height: 18em;
   resize: vertical;
   overflow-y: auto;
   white-space: pre-wrap;
