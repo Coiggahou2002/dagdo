@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-04-23
+
 - Fix: dragging a node no longer spuriously opens its edit popover. Root cause: ReactFlow's `selectNodesOnDrag=true` (default) sets `node.selected=true` on drag-start via `onNodesChange`, and `TaskNode` was using `props.selected` to control the popover. Fix: `TaskNode` now reads `data.isPopoverOpen` (set only when the user explicitly clicks a node) instead of `props.selected`. A `dragMovedRef` guard in `onNodeClick` provides a secondary defence against the trailing click that follows a drag-end. (#29)
 
 ## [0.13.0] - 2026-04-23
