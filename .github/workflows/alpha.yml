@@ -3,6 +3,12 @@ name: Alpha
 on:
   push:
     branches-ignore: [main]
+    paths-ignore:
+      - '.github/**'
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - 'skills/**'
 
 jobs:
   test:
