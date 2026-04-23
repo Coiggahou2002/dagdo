@@ -357,6 +357,7 @@ export function App() {
           const nodeData = {
             task,
             state: "ready" as const,
+            isPopoverOpen: false,
             onRename: handleRename,
             onPatch: handlePatch,
             onDelete: handleDelete,
