@@ -1,4 +1,4 @@
-import { useEffect, useState, type KeyboardEvent, type MouseEvent, type WheelEvent } from "react";
+import { useEffect, useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { Priority, Task } from "./types";
 
 interface TaskPopoverProps {
@@ -99,20 +99,20 @@ export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverPr
 
   // Swallow pointer events so clicks inside the popover don't bubble up to the
   // React Flow pane handler (which would close the popover via onPaneClick).
-  // Wheel events must also be stopped — otherwise scrolling a textarea (notes)
-  // bubbles to React Flow and zooms the canvas instead.
+  // `nowheel` tells React Flow's native wheel handler to ignore scroll events
+  // originating inside this element — without it, scrolling the notes textarea
+  // zooms the canvas. (React synthetic `onWheel` + stopPropagation doesn't
+  // work because React Flow listens at the native DOM level, not via React.)
   const stop = (e: MouseEvent) => e.stopPropagation();
-  const stopWheel = (e: WheelEvent) => e.stopPropagation();
 
   return (
     <div
-      className="dagdo-popover"
+      className="dagdo-popover nowheel"
       role="dialog"
       aria-label={`Edit task ${task.title}`}
       onClick={stop}
       onMouseDown={stop}
       onPointerDown={stop}
-      onWheel={stopWheel}
     >
       <div className="dagdo-popover-head">
         <span className="dagdo-popover-title">Task</span>
