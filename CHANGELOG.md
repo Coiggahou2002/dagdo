@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.15.2] - 2026-04-23
+
 - `dagdo ui` popover: replace "Mark as done" checkbox with a **Done** primary button (right side of footer) and move **Delete** to a secondary outline button beside it. Already-done tasks show an **Undo** button instead. (#40)
 
 ## [0.15.1] - 2026-04-23
