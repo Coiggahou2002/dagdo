@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-04-23
+
 - Tasks now carry a plain-text `notes` field — a place to jot acceptance criteria, a link, or why the task exists without stuffing it into the title. Edit via the `dagdo ui` popover (new Notes textarea below Tags, commits on blur) or the CLI (`dagdo edit <id> --note "…"` / `--clear-note`). Soft limit 2000 chars, enforced on both ends; the popover textarea uses `maxLength` so you see the cap locally and the server rejects oversize writes with a clear toast. Notes stay out of `dagdo list` / `dagdo graph` output to keep the scannable views tidy — they only surface where you went looking for them. Existing `~/.dagdo/data.json` loads without migration (field is optional). (#31)
 
 ## [0.12.0] - 2026-04-22
