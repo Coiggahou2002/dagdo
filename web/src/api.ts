@@ -14,6 +14,7 @@ export type ApiErrorKind =
   | "already_exists"
   | "task_not_found"
   | "self_loop"
+  | "note_too_long"
   | "invalid"
   | "unknown";
 
@@ -41,6 +42,7 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
     body.error === "already_exists" ? "already_exists" :
     body.error === "task_not_found" ? "task_not_found" :
     body.error === "self_loop" ? "self_loop" :
+    body.error === "note_too_long" ? "note_too_long" :
     body.error ? "invalid" :
     "unknown";
   throw new ApiError(kind, body.error ?? `HTTP ${res.status}`, body);
@@ -61,6 +63,7 @@ export interface TaskPatch {
   priority?: Priority;
   tags?: string[];
   doneAt?: string | null;
+  notes?: string | null;
 }
 
 export async function updateTask(id: string, patch: TaskPatch): Promise<Task> {

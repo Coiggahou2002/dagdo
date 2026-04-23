@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Tasks now carry a plain-text `notes` field — a place to jot acceptance criteria, a link, or why the task exists without stuffing it into the title. Edit via the `dagdo ui` popover (new Notes textarea below Tags, commits on blur) or the CLI (`dagdo edit <id> --note "…"` / `--clear-note`). Soft limit 2000 chars, enforced on both ends; the popover textarea uses `maxLength` so you see the cap locally and the server rejects oversize writes with a clear toast. Notes stay out of `dagdo list` / `dagdo graph` output to keep the scannable views tidy — they only surface where you went looking for them. Existing `~/.dagdo/data.json` loads without migration (field is optional). (#31)
+
 ## [0.12.0] - 2026-04-22
 
 - `dagdo ui` replaces the sidebar property panel with a compact popover anchored next to the selected node — less mouse travel for quick edits, stays glued to the node as you pan/zoom, flips from below-node to above when it would overflow the viewport, and dismisses on Esc or by clicking elsewhere. The popover now also lets you rename the task inline (the node's double-click rename still works). (#18)

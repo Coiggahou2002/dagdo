@@ -556,6 +556,35 @@ body,
   font-weight: 500;
 }
 
+/* Shares chrome with `.dagdo-popover-input`; `resize: vertical` lets users
+   grow the textarea when a note is long, and `max-height` keeps the popover
+   from pushing itself off the viewport. Overflow scrolls internally. */
+.dagdo-popover-textarea {
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.5;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 6px 10px;
+  outline: none;
+  letter-spacing: -0.17px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+  min-height: 9em;
+  max-height: 18em;
+  resize: vertical;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.dagdo-popover-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
 .dagdo-popover-checkbox {
   display: flex;
   align-items: center;

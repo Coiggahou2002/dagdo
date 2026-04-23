@@ -60,9 +60,11 @@ dagdo graph --png out.png --dot    # render PNG via Graphviz
 
 ### Edit / remove
 ```bash
-dagdo edit <id> [--title <new>] [--priority <p>] [--tag <add>] [--untag <remove>]
+dagdo edit <id> [--title <new>] [--priority <p>] [--tag <add>] [--untag <remove>] [--note <text>] [--clear-note]
 dagdo rm <id> [--force]
 ```
+
+`--note` attaches a plain-text note to the task (acceptance criteria, a link, why it exists — whatever's useful). Max 2000 chars. `--clear-note` blanks it. Notes live on the task record but don't appear in `dagdo list` / `dagdo graph` — they're visible in the `dagdo ui` popover and round-trip via subsequent `dagdo edit`.
 
 ### View (render and open)
 ```bash
@@ -76,7 +78,7 @@ dagdo ui                # default port 3737
 dagdo ui --port 8080
 dagdo ui --no-open
 ```
-Starts a local server and opens a browser tab with a React + React Flow rendering of the graph. Supports: drag to reposition nodes (ephemeral — positions are not persisted), drag handle-to-handle to create dependencies (cycle-checked server-side, rejected with a toast on conflict), select + `Delete` to remove nodes or edges, double-click title to rename, **+ New task** button to add. Click a node to open a property panel: change priority, add/remove tags, mark as done, or delete. Each node shows a small priority dot (high=terracotta / med=gray / low=muted). All mutations go through the same `~/.dagdo/data.json` that the CLI writes, so CLI edits and UI edits converge automatically.
+Starts a local server and opens a browser tab with a React + React Flow rendering of the graph. Supports: drag to reposition nodes (ephemeral — positions are not persisted), drag handle-to-handle to create dependencies (cycle-checked server-side, rejected with a toast on conflict), select + `Delete` to remove nodes or edges, double-click title to rename, **+ New task** button to add. Click a node to open a compact popover: rename, change priority, add/remove tags, write a plain-text note (max 2000 chars), mark as done, or delete. Each node shows a small priority dot (high=terracotta / med=gray / low=muted). All mutations go through the same `~/.dagdo/data.json` that the CLI writes, so CLI edits and UI edits converge automatically.
 
 ### Status overview
 ```bash
