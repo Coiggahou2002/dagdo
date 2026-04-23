@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Fix: dragging a node no longer spuriously opens its edit popover. Uses React Flow v12's `nodeClickDistance` prop (threshold: 5 px) so any pointer movement beyond that during a node interaction is treated as a drag and suppresses the subsequent click. (#29)
+
 ## [0.12.0] - 2026-04-22
 
 - `dagdo ui` replaces the sidebar property panel with a compact popover anchored next to the selected node — less mouse travel for quick edits, stays glued to the node as you pan/zoom, flips from below-node to above when it would overflow the viewport, and dismisses on Esc or by clicking elsewhere. The popover now also lets you rename the task inline (the node's double-click rename still works). (#18)

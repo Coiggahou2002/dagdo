@@ -538,6 +538,7 @@ export function App() {
               onEdgesDelete={onEdgesDelete}
               onNodesDelete={onNodesDelete}
               onNodeClick={onNodeClick}
+              nodeClickDistance={5}
               onPaneClick={onPaneClick}
               onPaneMouseMove={onPaneMouseMove}
               onPaneMouseLeave={onPaneMouseLeave}
