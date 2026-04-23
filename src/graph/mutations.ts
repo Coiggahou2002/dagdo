@@ -34,20 +34,35 @@ export function addTask(data: GraphData, args: AddTaskArgs): { data: GraphData; 
   };
 }
 
+/**
+ * Soft ceiling on `notes`. Counted in JS string length (UTF-16 code units),
+ * not bytes — predictable for users regardless of script. 2000 chars is about
+ * 6 KB of pure CJK or 2 KB of ASCII, enough for acceptance criteria + a link
+ * or two without letting a pathological paste balloon `data.json`.
+ */
+export const NOTES_MAX_CHARS = 2000;
+
 export interface TaskPatch {
   title?: string;
   priority?: Priority;
   tags?: string[];
   doneAt?: string | null;
+  /** `null` clears the notes field; a string replaces it. */
+  notes?: string | null;
 }
 
 export type UpdateTaskResult =
   | { ok: true; data: GraphData; task: Task }
-  | { ok: false; error: "task_not_found" };
+  | { ok: false; error: "task_not_found" }
+  | { ok: false; error: "note_too_long"; limit: number };
 
 export function updateTask(data: GraphData, id: string, patch: TaskPatch): UpdateTaskResult {
   const idx = data.tasks.findIndex((t) => t.id === id);
   if (idx < 0) return { ok: false, error: "task_not_found" };
+
+  if (typeof patch.notes === "string" && patch.notes.length > NOTES_MAX_CHARS) {
+    return { ok: false, error: "note_too_long", limit: NOTES_MAX_CHARS };
+  }
 
   const existing = data.tasks[idx]!;
   const updated: Task = {
@@ -56,10 +71,20 @@ export function updateTask(data: GraphData, id: string, patch: TaskPatch): Updat
     ...(patch.priority !== undefined ? { priority: patch.priority } : {}),
     ...(patch.tags !== undefined ? { tags: patch.tags } : {}),
     ...(patch.doneAt !== undefined ? { doneAt: patch.doneAt } : {}),
+    ...applyNotesPatch(patch.notes),
   };
   const tasks = data.tasks.slice();
   tasks[idx] = updated;
   return { ok: true, data: { ...data, tasks }, task: updated };
+}
+
+// `null` (and empty string) means "drop the field entirely" so serialized
+// `data.json` doesn't grow a `"notes": ""` line for every task that's ever
+// had its notes cleared. A string with content sets it.
+function applyNotesPatch(notes: string | null | undefined): Partial<Task> {
+  if (notes === undefined) return {};
+  if (notes === null || notes === "") return { notes: undefined };
+  return { notes };
 }
 
 export type RemoveTaskResult =

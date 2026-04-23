@@ -81,7 +81,7 @@ dagdo graph --all --png graph.png  # PNG image with done tasks grayed out
 | `dagdo link <id> --before <other>` | Add dependency edge (with cycle detection) |
 | `dagdo unlink <id> <other>` | Remove dependency edge (direction-agnostic) |
 | `dagdo graph` | Visualize DAG (`--mermaid`, `--png <file>`, `--dot`, `--all`) |
-| `dagdo edit <id>` | Edit task (`--title`, `--priority`, `--tag`, `--untag`) |
+| `dagdo edit <id>` | Edit task (`--title`, `--priority`, `--tag`, `--untag`, `--note`, `--clear-note`) |
 | `dagdo rm <id>` | Remove task and its edges |
 | `dagdo view` | Render full graph as SVG and open it in your browser |
 | `dagdo ui` | Start a local web view with live updates (read-only for now) |
@@ -124,7 +124,7 @@ Tasks are stored in `~/.dagdo/data.json` — one user-level todo list across all
 
 ## Web view
 
-`dagdo ui` starts a local HTTP server on `http://localhost:3737`, opens your browser, and renders an interactive task graph. CLI changes from other terminals appear within a second; the browser can also edit: drag nodes to rearrange, drag from one node's bottom handle to another's top to create a dependency (with cycle detection), select a node/edge and press `Delete` to remove it, double-click a node title to rename it, and use the **+ New task** button in the header to add one. Click a node to open a compact popover anchored next to it — change priority, add/remove tags, or mark the task done.
+`dagdo ui` starts a local HTTP server on `http://localhost:3737`, opens your browser, and renders an interactive task graph. CLI changes from other terminals appear within a second; the browser can also edit: drag nodes to rearrange, drag from one node's bottom handle to another's top to create a dependency (with cycle detection), select a node/edge and press `Delete` to remove it, double-click a node title to rename it, and use the **+ New task** button in the header to add one. Click a node to open a compact popover anchored next to it — rename the task, change priority, add/remove tags, write a plain-text note (up to 2000 chars), or mark the task done.
 
 **Canvas shortcuts:**
 

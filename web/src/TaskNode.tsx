@@ -48,20 +48,23 @@ function TaskNodeImpl(props: NodeProps) {
   // After the popover paints (or the viewport moves), check whether it fits
   // where we placed it. If the currently-chosen edge overflows the viewport
   // and the opposite edge has room, flip.
+  // `popoverPosition` is intentionally excluded from the deps — the effect
+  // reads it via closure but must NOT re-fire when it changes, otherwise the
+  // flip (Bottom→Top or Top→Bottom) re-triggers the effect which re-measures
+  // and may flip back, causing React error #185 (infinite update loop). One
+  // flip per external change (viewport move, content resize) is enough;
+  // subsequent viewport changes will re-evaluate from the current position.
   useLayoutEffect(() => {
     if (!selected) return;
     const el = popoverRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
     const winH = window.innerHeight;
-    const winW = window.innerWidth;
 
     if (popoverPosition === Position.Bottom) {
       if (rect.bottom > winH - VIEWPORT_MARGIN) {
-        // Only flip if there's actually more room above — otherwise stay put
-        // and let the popover scroll/clip rather than dance between sides.
         const overflowBelow = rect.bottom - (winH - VIEWPORT_MARGIN);
-        const spaceAbove = rect.top - VIEWPORT_MARGIN; // current top, pre-flip
+        const spaceAbove = rect.top - VIEWPORT_MARGIN;
         if (spaceAbove > overflowBelow) {
           setPopoverPosition(Position.Top);
         }
@@ -75,14 +78,8 @@ function TaskNodeImpl(props: NodeProps) {
         }
       }
     }
-
-    // Horizontal overflow: NodeToolbar centers the popover over the node, so
-    // if the node is near a viewport edge the popover may still clip. There's
-    // no Position.Top-Left in the typed enum; we leave horizontal handling to
-    // the CSS max-width — the popover is only ~260px wide and the canvas is
-    // unlikely to scroll this into a dead corner in practice.
-    void winW;
-  }, [selected, popoverPosition, viewport.x, viewport.y, viewport.zoom, task.title, task.tags.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, viewport.x, viewport.y, viewport.zoom, task.title, task.tags.length]);
 
   // Reset to preferred side each time the popover opens on a (possibly new)
   // node, so moving between nodes doesn't carry over a stale flip.
