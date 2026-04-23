@@ -1,5 +1,7 @@
 # dagdo
 
+[English](README.md) | [中文](README.zh-CN.md)
+
 Dependency-aware todo manager. Tasks form a DAG (directed acyclic graph) — topological sort tells you what to do next.
 
 <picture>
