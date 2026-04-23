@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- README: fix stale `dagdo done` / `dagdo next` example output to match actual CLI format, update Features list (add notes, web view, cloud sync, dark mode), fix `dagdo ui` command description, and restructure into "For Humans" / "For Agents" sections with the Claude Code skill install and usage guidance in its own section. (#30)
+
 ## [0.14.0] - 2026-04-23
 
 - `dagdo ui` migrates to shadcn/ui component library + Tailwind CSS v4. All hand-written CSS replaced with Tailwind utilities and shadcn's default zinc palette. Adds light/dark/system theme toggle (persisted to localStorage) with React Flow `colorMode` integration so canvas, nodes, controls, and minimap all follow the theme. Toast notifications switch from hand-rolled to Sonner. Popover form controls use shadcn `Button`, `Input`, `Textarea`, and `Badge`. Old `styles.css` removed entirely.
