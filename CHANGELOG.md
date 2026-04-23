@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.14.3] - 2026-04-23
+
 - Alpha workflow skips test + publish when a push only touches workflow files, markdown, docs, LICENSE, or skills — avoids wasting CI minutes and publishing identical alpha packages. (#28)
 
 ## [0.14.2] - 2026-04-23
