@@ -9,25 +9,33 @@ Dependency-aware todo manager. Tasks form a DAG (directed acyclic graph) — top
 
 Most todo apps treat tasks as a flat list. Real work has dependencies: you can't deploy before tests pass, can't test before the API is built. **dagdo** models your tasks as a graph and always tells you which tasks are ready to work on right now (zero in-degree nodes).
 
-## Features
+---
+
+## For Humans
+
+### Features
 
 - **Dependency graph** — link tasks with `dagdo link`, cycles are automatically rejected
 - **What's next?** — `dagdo next` shows tasks with no unfinished blockers (topological sort)
 - **Smart completion** — `dagdo done` tells you which tasks just became unblocked
-- **Visualize** — ASCII tree, Mermaid syntax, or PNG/SVG image via Graphviz
+- **Notes** — attach plain-text notes to tasks (acceptance criteria, links, context)
+- **Visualize** — ASCII tree, Mermaid syntax, or PNG/SVG image (`--dot` for Graphviz)
+- **Web view** — `dagdo ui` opens an interactive graph editor with live updates
+- **Cloud sync** — `dagdo sync` keeps tasks in sync across machines via any git remote
 - **Priority & tags** — filter and sort by what matters
 - **Prefix IDs** — type `a3f` instead of the full `a3f1b2`
+- **Light / dark mode** — web view follows your system theme (or toggle manually)
 - **Single binary** — compile to a standalone executable, no runtime needed
 
-## Install
+### Install
 
-### npm
+#### npm
 
 ```bash
 npm install -g @coiggahou2002/dagdo
 ```
 
-### From source (requires [Bun](https://bun.sh))
+#### From source (requires [Bun](https://bun.sh))
 
 ```bash
 git clone https://github.com/Coiggahou2002/dagdo.git
@@ -36,11 +44,11 @@ bun install
 bun run build   # produces ./dagdo binary
 ```
 
-### Pre-built binaries
+#### Pre-built binaries
 
 Download from [GitHub Releases](https://github.com/Coiggahou2002/dagdo/releases).
 
-## Quick start
+### Quick start
 
 ```bash
 # Add tasks
@@ -57,12 +65,13 @@ dagdo link <frontend-id> --before <testing-id> # Frontend must finish before tes
 
 # What can I work on right now?
 dagdo next
-# => Design database schema (it's the only unblocked task)
+# a3f1b2  HIGH  Design database schema [backend]
 
 # Finish a task
 dagdo done <design-id>
-# => Unblocked: Implement API
-# => Unblocked: Build frontend
+# Done a3f1b2  Design database schema
+#   Unblocked: b2c3d4  Implement API
+#   Unblocked: e5f6a7  Build frontend
 
 # See the dependency graph
 dagdo graph              # ASCII in terminal
@@ -70,7 +79,7 @@ dagdo graph --mermaid    # Mermaid syntax (paste into GitHub/Notion)
 dagdo graph --all --png graph.png  # PNG image with done tasks grayed out
 ```
 
-## Commands
+### Commands
 
 | Command | Description |
 |---------|-------------|
@@ -84,7 +93,7 @@ dagdo graph --all --png graph.png  # PNG image with done tasks grayed out
 | `dagdo edit <id>` | Edit task (`--title`, `--priority`, `--tag`, `--untag`, `--note`, `--clear-note`) |
 | `dagdo rm <id>` | Remove task and its edges |
 | `dagdo view` | Render full graph as SVG and open it in your browser |
-| `dagdo ui` | Start a local web view with live updates (read-only for now) |
+| `dagdo ui` | Interactive web view with live updates and graph editing |
 | `dagdo status` | Overview: total, done, ready, blocked |
 | `dagdo sync init <url>` | Configure cloud sync with a git remote |
 | `dagdo sync` | Sync global tasks (fast-forward; errors on divergence) |
@@ -93,7 +102,7 @@ dagdo graph --all --png graph.png  # PNG image with done tasks grayed out
 | `dagdo help` | Show help |
 | `dagdo --version` | Print version |
 
-### ID shortcuts
+#### ID shortcuts
 
 Every task gets a 6-character hex ID (e.g. `a3f1b2`). You can use any unique prefix:
 
@@ -102,7 +111,7 @@ dagdo done a3f    # matches a3f1b2
 dagdo done a      # works if only one ID starts with "a"
 ```
 
-## Visualization
+### Visualization
 
 ```bash
 # ASCII tree (default)
@@ -118,13 +127,13 @@ dagdo graph --all --png full.png   # include done tasks (grayed out)
 dagdo graph --png output.png --dot # use Graphviz instead of Mermaid
 ```
 
-## Data storage
+### Data storage
 
 Tasks are stored in `~/.dagdo/data.json` — one user-level todo list across all your projects. If you want the list synced across machines, see the next section.
 
-## Web view
+### Web view
 
-`dagdo ui` starts a local HTTP server on `http://localhost:3737`, opens your browser, and renders an interactive task graph. CLI changes from other terminals appear within a second; the browser can also edit: drag nodes to rearrange, drag from one node's bottom handle to another's top to create a dependency (with cycle detection), select a node/edge and press `Delete` to remove it, double-click a node title to rename it, and use the **+ New task** button in the header to add one. Click a node to open a compact popover anchored next to it — rename the task, change priority, add/remove tags, write a plain-text note (up to 2000 chars), or mark the task done.
+`dagdo ui` starts a local HTTP server on `http://localhost:3737`, opens your browser, and renders an interactive task graph. CLI changes from other terminals appear within a second; the browser can also edit: drag nodes to rearrange, drag from one node's bottom handle to another's top to create a dependency (with cycle detection), select a node/edge and press `Delete` to remove it, double-click a node title to rename it, and use the **+ New task** button in the header to add one. Click a node to open a compact popover anchored next to it — rename the task, change priority, add/remove tags, write a plain-text note (up to 2000 chars), or mark the task done. Supports light, dark, and system themes.
 
 **Canvas shortcuts:**
 
@@ -140,7 +149,7 @@ dagdo ui --no-open        # don't auto-open — useful in remote/SSH sessions
 
 Port conflicts auto-increment (e.g. a second instance will land on 3738). `Ctrl+C` stops the server.
 
-## Cloud sync (optional)
+### Cloud sync (optional)
 
 If you use dagdo across multiple machines, you can sync your global tasks through any git remote (GitHub, GitLab, self-hosted — whatever you already use).
 
@@ -170,16 +179,28 @@ dagdo sync --accept-local    # keep local, overwrite remote
 dagdo sync --accept-remote   # keep remote, overwrite local
 ```
 
-## Claude Code skill
+---
 
-dagdo ships with a [Claude Code](https://claude.ai/code) skill that lets AI agents manage your tasks. To install:
+## For Agents
+
+dagdo ships with a [Claude Code](https://claude.ai/code) skill that lets AI agents manage tasks through the CLI. The agent decomposes work into tasks, links dependencies, and uses `dagdo next` to recommend what to work on — all via natural language.
+
+### Install the skill
 
 ```bash
-# Copy the skill to your global Claude Code skills directory
 cp -r skills/dagdo ~/.claude/skills/dagdo
 ```
 
-Then ask Claude: "help me plan the API refactor as dagdo tasks" — it will decompose the work, create tasks, and link dependencies automatically.
+### Usage
+
+Just describe your work — the agent handles the rest:
+
+- *"help me plan the API refactor as dagdo tasks"* — decomposes the work, creates tasks, links dependencies
+- *"what should I work on next?"* — runs `dagdo next` and recommends based on priority
+- *"I finished the database migration"* — finds the task, marks it done, reports what's unblocked
+- *"remind me to ask Jack for the server credentials"* — creates a quick task
+
+The full command reference, storage details, and interaction guidelines live in [`skills/dagdo/SKILL.md`](skills/dagdo/SKILL.md).
 
 ## License
 
