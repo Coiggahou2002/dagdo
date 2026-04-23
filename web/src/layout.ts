@@ -1,7 +1,7 @@
 import dagre from "dagre";
 import type { Edge, NodeState, Task } from "./types";
 
-const NODE_WIDTH = 200;
+const NODE_WIDTH = 280;
 const NODE_HEIGHT = 64;
 
 // Gap between connected components when packed side-by-side. 120px is ~3x the
@@ -120,7 +120,7 @@ function layoutComponent(
   const memberIds = new Set(componentTasks.map((t) => t.id));
 
   const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: "TB", nodesep: 40, ranksep: 70, marginx: 20, marginy: 20 });
+  g.setGraph({ rankdir: "TB", nodesep: 60, ranksep: 70, marginx: 20, marginy: 20 });
   g.setDefaultEdgeLabel(() => ({}));
 
   for (const t of componentTasks) {
