@@ -75,6 +75,7 @@ export function App() {
   // to the dagre layout. Pristine nodes pick up fresh dagre coordinates each time
   // the topology changes.
   const userPositioned = useRef(new Set<string>());
+  const dragMovedRef = useRef(false);
 
   // React Flow instance (captured via onInit). Needed for screenToFlowPosition
   // so Option/Alt+click can translate a viewport pixel coordinate back into the
@@ -178,6 +179,7 @@ export function App() {
           data: {
             task,
             state: auto?.state ?? "blocked",
+            isPopoverOpen: selectedId === task.id,
             onRename: handleRename,
             onPatch: handlePatch,
             onDelete: handleDelete,
@@ -226,9 +228,22 @@ export function App() {
     setEdges((es) => applyEdgeChanges(changes, es));
   }, []);
 
+  const onNodeDragStart = useCallback<NonNullable<React.ComponentProps<typeof ReactFlow>["onNodeDragStart"]>>(
+    () => { dragMovedRef.current = false; },
+    [],
+  );
+
+  const onNodeDrag = useCallback<NonNullable<React.ComponentProps<typeof ReactFlow>["onNodeDrag"]>>(
+    () => { dragMovedRef.current = true; },
+    [],
+  );
+
   const onNodeDragStop = useCallback<NonNullable<React.ComponentProps<typeof ReactFlow>["onNodeDragStop"]>>(
     (_event, node) => {
       userPositioned.current.add(node.id);
+      // Keep dragMovedRef true until after the trailing click fires (same task
+      // as mouseup), then clear it so the next genuine click goes through.
+      setTimeout(() => { dragMovedRef.current = false; }, 0);
     },
     [],
   );
@@ -270,6 +285,10 @@ export function App() {
       // Clicks inside the draft node's input bubble up as node clicks — don't
       // let them open a popover for a task that doesn't exist yet.
       if (isDraftId(node.id)) return;
+      // The mouseup that ends a drag also triggers a click; dragMovedRef is
+      // set by onNodeDrag and cleared after a setTimeout(0) in onNodeDragStop,
+      // so it's still true here when this handler fires from a drag-end.
+      if (dragMovedRef.current) return;
       setSelectedId(node.id);
     },
     [],
@@ -338,6 +357,7 @@ export function App() {
           const nodeData = {
             task,
             state: "ready" as const,
+            isPopoverOpen: false,
             onRename: handleRename,
             onPatch: handlePatch,
             onDelete: handleDelete,
@@ -533,6 +553,8 @@ export function App() {
               onInit={onInit}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
+              onNodeDragStart={onNodeDragStart}
+              onNodeDrag={onNodeDrag}
               onNodeDragStop={onNodeDragStop}
               onConnect={onConnect}
               onEdgesDelete={onEdgesDelete}

@@ -13,6 +13,7 @@ import type { TaskPatch } from "./api";
 export interface TaskNodeData extends Record<string, unknown> {
   task: Task;
   state: NodeState;
+  isPopoverOpen: boolean;
   onRename: (id: string, title: string) => void;
   onPatch: (id: string, patch: TaskPatch) => void;
   onDelete: (id: string) => void;
@@ -24,8 +25,11 @@ const POPOVER_OFFSET = 10;
 const VIEWPORT_MARGIN = 8;
 
 function TaskNodeImpl(props: NodeProps) {
-  const { task, state, onRename, onPatch, onDelete, onClosePopover } = props.data as TaskNodeData;
-  const selected = props.selected === true;
+  const { task, state, isPopoverOpen, onRename, onPatch, onDelete, onClosePopover } = props.data as TaskNodeData;
+  // Use the app-controlled isPopoverOpen (tied to selectedId) rather than
+  // props.selected, which ReactFlow sets on drag-start via selectNodesOnDrag
+  // and would cause the popover to open spuriously on every drag.
+  const selected = isPopoverOpen === true;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
