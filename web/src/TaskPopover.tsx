@@ -1,4 +1,9 @@
 import { useEffect, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import type { Priority, Task } from "./types";
 
 interface TaskPopoverProps {
@@ -15,37 +20,18 @@ interface TaskPopoverProps {
 }
 
 const PRIORITIES: Priority[] = ["high", "med", "low"];
-
-// Matches server-side `NOTES_MAX_CHARS` in src/graph/mutations.ts. The textarea
-// also enforces it via `maxLength`, so users get the native browser hint
-// before any network round-trip.
 const NOTES_MAX_CHARS = 2000;
 
-/**
- * Compact, in-canvas editor for a single task. Rendered inside a React Flow
- * <NodeToolbar>, so positioning / zoom-tracking is handled upstream — this
- * component is pure UI.
- */
 export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverProps) {
   const [tagDraft, setTagDraft] = useState("");
   const [titleDraft, setTitleDraft] = useState(task.title);
   const [notesDraft, setNotesDraft] = useState(task.notes ?? "");
 
-  // Reset input drafts when switching between tasks so nothing leaks across.
   useEffect(() => {
     setTagDraft("");
     setTitleDraft(task.title);
     setNotesDraft(task.notes ?? "");
   }, [task.id, task.title, task.notes]);
-
-  function commitNotes(): void {
-    const next = notesDraft;
-    const current = task.notes ?? "";
-    if (next === current) return;
-    // Empty → null so the server/mutations path drops the field entirely
-    // rather than persisting `"notes": ""`.
-    onChange({ notes: next.length === 0 ? null : next });
-  }
 
   function commitTitle(): void {
     const next = titleDraft.trim();
@@ -54,6 +40,13 @@ export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverPr
       return;
     }
     onChange({ title: next });
+  }
+
+  function commitNotes(): void {
+    const next = notesDraft;
+    const current = task.notes ?? "";
+    if (next === current) return;
+    onChange({ notes: next.length === 0 ? null : next });
   }
 
   function onTitleKeyDown(e: KeyboardEvent<HTMLInputElement>): void {
@@ -70,8 +63,7 @@ export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverPr
 
   function addTag(raw: string): void {
     const tag = raw.trim();
-    if (tag.length === 0) return;
-    if (task.tags.includes(tag)) return;
+    if (tag.length === 0 || task.tags.includes(tag)) return;
     onChange({ tags: [...task.tags, tag] });
     setTagDraft("");
   }
@@ -86,8 +78,6 @@ export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverPr
       addTag(tagDraft);
     } else if (e.key === "Escape") {
       e.preventDefault();
-      // Let the wrapper's Esc-handler close the popover only if the draft is empty;
-      // otherwise consume Escape to clear the draft.
       if (tagDraft.length > 0) {
         e.stopPropagation();
         setTagDraft("");
@@ -97,128 +87,141 @@ export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverPr
 
   const done = task.doneAt != null;
 
-  // Swallow pointer events so clicks inside the popover don't bubble up to the
-  // React Flow pane handler (which would close the popover via onPaneClick).
-  // `nowheel` tells React Flow's native wheel handler to ignore scroll events
-  // originating inside this element — without it, scrolling the notes textarea
-  // zooms the canvas. (React synthetic `onWheel` + stopPropagation doesn't
-  // work because React Flow listens at the native DOM level, not via React.)
   const stop = (e: MouseEvent) => e.stopPropagation();
 
   return (
     <div
-      className="dagdo-popover nowheel"
+      className="nowheel w-[280px] rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-lg"
       role="dialog"
       aria-label={`Edit task ${task.title}`}
       onClick={stop}
       onMouseDown={stop}
       onPointerDown={stop}
     >
-      <div className="dagdo-popover-head">
-        <span className="dagdo-popover-title">Task</span>
-        <button className="dagdo-popover-close" onClick={onClose} aria-label="Close">
-          ✕
-        </button>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Task
+        </span>
+        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={onClose} aria-label="Close">
+          <X className="h-3.5 w-3.5" />
+        </Button>
       </div>
 
-      <div className="dagdo-popover-row">
-        <div className="dagdo-popover-label">Title</div>
-        <input
-          className="dagdo-popover-input dagdo-popover-input-title"
+      {/* Title */}
+      <div className="space-y-1.5 mb-3">
+        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Title
+        </label>
+        <Input
           value={titleDraft}
           onChange={(e) => setTitleDraft(e.target.value)}
           onKeyDown={onTitleKeyDown}
-          // React Flow listens for Backspace/Delete at the canvas level to
-          // remove selected nodes — stop those keys from bubbling so typing
-          // in the title doesn't delete the task itself.
           onKeyDownCapture={(e) => e.stopPropagation()}
           onBlur={commitTitle}
           aria-label="Task title"
+          className="h-8 text-sm font-medium"
         />
       </div>
 
-      <div className="dagdo-popover-row">
-        <div className="dagdo-popover-label">Priority</div>
-        <div className="dagdo-popover-segmented">
+      {/* Priority */}
+      <div className="space-y-1.5 mb-3">
+        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Priority
+        </label>
+        <div className="flex gap-1">
           {PRIORITIES.map((p) => (
-            <button
+            <Button
               key={p}
-              className={`dagdo-popover-seg ${task.priority === p ? "is-active" : ""} dagdo-popover-seg-${p}`}
+              variant={task.priority === p ? "default" : "outline"}
+              size="sm"
+              className="flex-1 text-xs capitalize"
               onClick={() => {
                 if (task.priority !== p) onChange({ priority: p });
               }}
             >
               {p}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
 
-      <div className="dagdo-popover-row">
-        <div className="dagdo-popover-label">Tags</div>
-        <div className="dagdo-popover-tags">
+      {/* Tags */}
+      <div className="space-y-1.5 mb-3">
+        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Tags
+        </label>
+        <div className="flex flex-wrap gap-1.5">
           {task.tags.map((tag) => (
-            <span key={tag} className="dagdo-chip">
+            <Badge key={tag} variant="secondary" className="gap-1 pr-1">
               {tag}
               <button
-                className="dagdo-chip-remove"
+                className="ml-0.5 rounded-full hover:bg-foreground/10 p-0.5 cursor-pointer"
                 onClick={() => removeTag(tag)}
                 aria-label={`Remove tag ${tag}`}
               >
-                ×
+                <X className="h-3 w-3" />
               </button>
-            </span>
+            </Badge>
           ))}
-          {task.tags.length === 0 && <span className="dagdo-popover-empty">no tags</span>}
+          {task.tags.length === 0 && (
+            <span className="text-xs text-muted-foreground">no tags</span>
+          )}
         </div>
-        <input
-          className="dagdo-popover-input"
+        <Input
           placeholder="add tag (Enter)"
           value={tagDraft}
           onChange={(e) => setTagDraft(e.target.value)}
           onKeyDown={onTagKeyDown}
+          onKeyDownCapture={(e) => e.stopPropagation()}
           onBlur={() => addTag(tagDraft)}
+          className="h-8 text-xs"
         />
       </div>
 
-      <div className="dagdo-popover-row">
-        <div className="dagdo-popover-label">Notes</div>
-        <textarea
-          className="dagdo-popover-textarea"
+      {/* Notes */}
+      <div className="space-y-1.5 mb-3">
+        <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Notes
+        </label>
+        <Textarea
           placeholder="Plain text — acceptance criteria, a link, why this task exists…"
           value={notesDraft}
           maxLength={NOTES_MAX_CHARS}
           onChange={(e) => setNotesDraft(e.target.value)}
-          // React Flow listens for Backspace/Delete at the canvas level to
-          // remove selected nodes — stop those keys from bubbling so typing
-          // in notes doesn't delete the task itself.
           onKeyDownCapture={(e) => e.stopPropagation()}
           onBlur={commitNotes}
           aria-label="Task notes"
+          className="text-xs max-h-[18em]"
         />
       </div>
 
-      <div className="dagdo-popover-row">
-        <label className="dagdo-popover-checkbox">
+      {/* Done */}
+      <div className="mb-3">
+        <label className="flex items-center gap-2 cursor-pointer select-none">
           <input
             type="checkbox"
             checked={done}
             onChange={(e) => onChange({ doneAt: e.target.checked ? new Date().toISOString() : null })}
+            className="rounded border-border accent-primary h-4 w-4 cursor-pointer"
           />
-          <span>Mark as done</span>
+          <span className="text-sm">Mark as done</span>
         </label>
         {done && task.doneAt && (
-          <div className="dagdo-popover-hint">Completed {formatDate(task.doneAt)}</div>
+          <div className="text-xs text-muted-foreground mt-1">
+            Completed {formatDate(task.doneAt)}
+          </div>
         )}
       </div>
 
-      <div className="dagdo-popover-footer">
-        <span className="dagdo-popover-hint dagdo-popover-id" title={task.id}>
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-2 border-t border-border">
+        <span className="text-xs text-muted-foreground" title={task.id}>
           {formatDate(task.createdAt)}
         </span>
-        <button className="dagdo-popover-delete" onClick={onDelete}>
+        <Button variant="destructive" size="sm" onClick={onDelete}>
           Delete
-        </button>
+        </Button>
       </div>
     </div>
   );
