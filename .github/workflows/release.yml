@@ -154,8 +154,11 @@ jobs:
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
+      - run: bun install
       - run: bun run build:web
-      - run: npm install --ignore-scripts
+      - run: bun run build:node
+      - name: Verify tarball contains dist/cli.js
+        run: npm pack --dry-run 2>&1 | grep 'dist/cli.js' || { echo "dist/cli.js missing from tarball"; exit 1; }
       - run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

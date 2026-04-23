@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- npm package now runs on Node.js — no Bun required. CLI entry (`bin/dagdo`) executes a pre-bundled `dist/cli.js` via `node` instead of running TypeScript source via `bun`. Build step (`bun build --target=node`) added to both release and alpha CI. `src/` removed from the published package; `engines` changed from `bun >=1.0.0` to `node >=18`. Development (`bun run dev`) and standalone binary (`bun build --compile`) are unchanged. (#2)
+
 ## [0.14.3] - 2026-04-23
 
 - Alpha workflow skips test + publish when a push only touches workflow files, markdown, docs, LICENSE, or skills — avoids wasting CI minutes and publishing identical alpha packages. (#28)
