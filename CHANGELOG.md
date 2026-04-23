@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-04-23
+
 - `dagdo ui` migrates to shadcn/ui component library + Tailwind CSS v4. All hand-written CSS replaced with Tailwind utilities and shadcn's default zinc palette. Adds light/dark/system theme toggle (persisted to localStorage) with React Flow `colorMode` integration so canvas, nodes, controls, and minimap all follow the theme. Toast notifications switch from hand-rolled to Sonner. Popover form controls use shadcn `Button`, `Input`, `Textarea`, and `Badge`. Old `styles.css` removed entirely.
 
 ## [0.13.1] - 2026-04-23
