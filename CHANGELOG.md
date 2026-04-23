@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- npm package now runs on Node.js — no Bun required. CLI entry (`bin/dagdo`) executes a pre-bundled `dist/cli.js` via `node` instead of running TypeScript source via `bun`. Build step (`bun build --target=node`) added to both release and alpha CI. `src/` removed from the published package; `engines` changed from `bun >=1.0.0` to `node >=18`. Development (`bun run dev`) and standalone binary (`bun build --compile`) are unchanged. (#2)
+
 ## [0.14.1] - 2026-04-23
 
 - README: fix stale `dagdo done` / `dagdo next` example output to match actual CLI format, update Features list (add notes, web view, cloud sync, dark mode), fix `dagdo ui` command description, and restructure into "For Humans" / "For Agents" sections with the Claude Code skill install and usage guidance in its own section. (#30)

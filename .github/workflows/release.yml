@@ -154,8 +154,9 @@ jobs:
         with:
           node-version: "20"
           registry-url: "https://registry.npmjs.org"
+      - run: bun install
       - run: bun run build:web
-      - run: npm install --ignore-scripts
+      - run: bun run build:node
       - run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

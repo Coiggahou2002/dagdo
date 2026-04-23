@@ -44,8 +44,9 @@ jobs:
           echo "alpha=$ALPHA_VERSION" >> "$GITHUB_OUTPUT"
           echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
           echo "Publishing alpha: $ALPHA_VERSION"
+      - run: bun install
       - run: bun run build:web
-      - run: npm install --ignore-scripts
+      - run: bun run build:node
       - run: npm publish --tag alpha --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

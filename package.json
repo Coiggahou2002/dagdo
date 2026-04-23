@@ -5,20 +5,20 @@
   "module": "src/cli.ts",
   "type": "module",
   "files": [
-    "src",
     "bin",
-    "skills",
-    "dist/web"
+    "dist",
+    "skills"
   ],
   "bin": {
     "dagdo": "bin/dagdo"
   },
   "engines": {
-    "bun": ">=1.0.0"
+    "node": ">=18"
   },
   "scripts": {
     "dev": "bun run src/cli.ts",
     "build:web": "cd web && bun install --frozen-lockfile && bun run build",
+    "build:node": "bun build src/cli.ts --target=node --outfile dist/cli.js --external mermaid-isomorphic --external playwright --external @hpcc-js/wasm-graphviz --external @resvg/resvg-js",
     "build": "bash scripts/build.sh",
     "test": "bun test",
     "typecheck": "tsc --noEmit && cd web && bun install --frozen-lockfile && bun run typecheck"
