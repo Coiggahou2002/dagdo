@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- `dagdo ui` popover: replace "Mark as done" checkbox with a **Done** primary button (right side of footer) and move **Delete** to a secondary outline button beside it. Already-done tasks show an **Undo** button instead. (#40)
+
 ## [0.15.1] - 2026-04-23
 
 - Fix: `dagdo ui` failed with "bundle not found" when installed via `npm i -g` because the bundled `dist/cli.js` resolved `import.meta.url` to `dist/` instead of `src/server/`, breaking the relative path to `dist/web/index.html`. Path resolution now tries both layouts (bundled and source) with a fallback.
