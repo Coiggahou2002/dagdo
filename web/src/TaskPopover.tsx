@@ -196,32 +196,23 @@ export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverPr
         />
       </div>
 
-      {/* Done */}
-      <div className="mb-3">
-        <label className="flex items-center gap-2 cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={done}
-            onChange={(e) => onChange({ doneAt: e.target.checked ? new Date().toISOString() : null })}
-            className="rounded border-border accent-primary h-4 w-4 cursor-pointer"
-          />
-          <span className="text-sm">Mark as done</span>
-        </label>
-        {done && task.doneAt && (
-          <div className="text-xs text-muted-foreground mt-1">
-            Completed {formatDate(task.doneAt)}
-          </div>
-        )}
-      </div>
-
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-border">
         <span className="text-xs text-muted-foreground" title={task.id}>
           {formatDate(task.createdAt)}
         </span>
-        <Button variant="destructive" size="sm" onClick={onDelete}>
-          Delete
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={onDelete}>
+            Delete
+          </Button>
+          <Button
+            size="sm"
+            variant={done ? "secondary" : "default"}
+            onClick={() => onChange({ doneAt: done ? null : new Date().toISOString() })}
+          >
+            {done ? "Undo" : "Done"}
+          </Button>
+        </div>
       </div>
     </div>
   );
