@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -25,6 +25,48 @@ interface FocusPanelProps {
   onDone: (id: string) => void;
   onFocus: (id: string) => void;
   onPriorityChange: (id: string, priority: Priority) => void;
+}
+
+const MIN_WIDTH = 260;
+const MAX_WIDTH = 400;
+const STORAGE_KEY = "dagdo-focus-width";
+
+function useResizableWidth() {
+  const [width, setWidth] = useState(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const n = Number(stored);
+      if (n >= MIN_WIDTH && n <= MAX_WIDTH) return n;
+    }
+    return MIN_WIDTH;
+  });
+  const dragging = useRef(false);
+  const startX = useRef(0);
+  const startW = useRef(0);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, String(width));
+  }, [width]);
+
+  const onPointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    dragging.current = true;
+    startX.current = e.clientX;
+    startW.current = width;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }, [width]);
+
+  const onPointerMove = useCallback((e: React.PointerEvent) => {
+    if (!dragging.current) return;
+    const delta = e.clientX - startX.current;
+    setWidth(Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, startW.current + delta)));
+  }, []);
+
+  const onPointerUp = useCallback(() => {
+    dragging.current = false;
+  }, []);
+
+  return { width, onPointerDown, onPointerMove, onPointerUp, isDragging: dragging };
 }
 
 const PRIORITY_STYLE: Record<Priority, string> = {
@@ -96,6 +138,7 @@ function SortableItem({
 }
 
 export function FocusPanel({ tasks, onDone, onFocus, onPriorityChange }: FocusPanelProps) {
+  const { width, onPointerDown, onPointerMove, onPointerUp } = useResizableWidth();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -118,9 +161,18 @@ export function FocusPanel({ tasks, onDone, onFocus, onPriorityChange }: FocusPa
     onPriorityChange(draggedId, overTask.priority);
   }
 
+  const resizeHandle = (
+    <div
+      className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 active:bg-primary/30 transition-colors"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+    />
+  );
+
   if (tasks.length === 0) {
     return (
-      <div className="w-[260px] shrink-0 border-r border-border bg-background flex flex-col">
+      <div className="relative shrink-0 border-r border-border bg-background flex flex-col" style={{ width }}>
         <div className="px-3 py-2 border-b border-border">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Focus
@@ -131,6 +183,7 @@ export function FocusPanel({ tasks, onDone, onFocus, onPriorityChange }: FocusPa
             There's no actionable tasks now. Please check your graph.
           </p>
         </div>
+        {resizeHandle}
       </div>
     );
   }
@@ -146,7 +199,7 @@ export function FocusPanel({ tasks, onDone, onFocus, onPriorityChange }: FocusPa
   }
 
   return (
-    <div className="w-[260px] shrink-0 border-r border-border bg-background flex flex-col">
+    <div className="relative shrink-0 border-r border-border bg-background flex flex-col" style={{ width }}>
       <div className="px-3 py-2 border-b border-border flex items-center justify-between">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Focus
@@ -181,6 +234,7 @@ export function FocusPanel({ tasks, onDone, onFocus, onPriorityChange }: FocusPa
           </SortableContext>
         </DndContext>
       </div>
+      {resizeHandle}
     </div>
   );
 }
