@@ -31,7 +31,8 @@ import {
 } from "./api";
 import { TaskNode, type TaskNodeData } from "./TaskNode";
 import { DraftNode, type DraftNodeData } from "./DraftNode";
-import type { GraphData } from "./types";
+import { FocusPanel } from "./FocusPanel";
+import type { GraphData, Priority } from "./types";
 
 const EMPTY: GraphData = { version: 1, tasks: [], edges: [] };
 
@@ -385,6 +386,48 @@ export function App() {
     return { total: graph.tasks.length, done };
   }, [graph]);
 
+  const readyTasks = useMemo(() => {
+    const doneIds = new Set(graph.tasks.filter((t) => t.doneAt != null).map((t) => t.id));
+    const blockerCount = new Map<string, number>();
+    for (const t of graph.tasks) blockerCount.set(t.id, 0);
+    for (const e of graph.edges) {
+      if (!doneIds.has(e.from)) {
+        blockerCount.set(e.to, (blockerCount.get(e.to) ?? 0) + 1);
+      }
+    }
+    const priorityOrder: Record<Priority, number> = { high: 0, med: 1, low: 2 };
+    return graph.tasks
+      .filter((t) => t.doneAt == null && (blockerCount.get(t.id) ?? 0) === 0)
+      .sort((a, b) => {
+        const pd = priorityOrder[a.priority] - priorityOrder[b.priority];
+        if (pd !== 0) return pd;
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      });
+  }, [graph]);
+
+  const handleFocusDone = useCallback((id: string) => {
+    updateTask(id, { doneAt: new Date().toISOString() }).catch((err: unknown) => {
+      toast.error(formatError("Done failed", err));
+    });
+  }, []);
+
+  const handleFocusNode = useCallback((id: string) => {
+    const node = nodes.find((n) => n.id === id);
+    const flow = flowRef.current;
+    if (!node || !flow) return;
+    flow.setCenter(node.position.x + NODE_WIDTH / 2, node.position.y + NODE_HEIGHT / 2, {
+      zoom: 1.2,
+      duration: 400,
+    });
+    setSelectedId(id);
+  }, [nodes]);
+
+  const handleFocusPriorityChange = useCallback((id: string, priority: Priority) => {
+    updateTask(id, { priority }).catch((err: unknown) => {
+      toast.error(formatError("Priority change failed", err));
+    });
+  }, []);
+
   const allNodes = useMemo<FlowNode<TaskNodeData | DraftNodeData>[]>(() => {
     if (!draft) return nodes;
     const draftId = draft.id;
@@ -447,9 +490,15 @@ export function App() {
         }}
       />
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 flex">
+        <FocusPanel
+          tasks={readyTasks}
+          onDone={handleFocusDone}
+          onFocus={handleFocusNode}
+          onPriorityChange={handleFocusPriorityChange}
+        />
         {graph.tasks.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
             <p>No tasks yet.</p>
             <Button onClick={onAddTask}>
               <Plus className="h-4 w-4" />
@@ -457,7 +506,7 @@ export function App() {
             </Button>
           </div>
         ) : (
-          <div className={`h-full${isSpaceDown ? " dagdo-canvas is-space-down" : " dagdo-canvas"}`}>
+          <div className={`flex-1 h-full${isSpaceDown ? " dagdo-canvas is-space-down" : " dagdo-canvas"}`}>
             <ReactFlow
               nodes={allNodes}
               edges={edges}
