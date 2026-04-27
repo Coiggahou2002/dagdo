@@ -100,6 +100,43 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ─── Scrollbar (dark-mode aware) ──────────────────────────────────── */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(240 4% 76%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(240 4% 64%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(240 4% 24%);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(240 4% 34%);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(240 4% 76%) transparent;
+}
+
+.dark * {
+  scrollbar-color: hsl(240 4% 24%) transparent;
+}
+
 /* ─── React Flow overrides ──────────────────────────────────────────── */
 
 .react-flow__handle {
