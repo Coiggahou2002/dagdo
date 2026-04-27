@@ -1,6 +1,6 @@
 import { generateId } from "../ids";
 import { wouldCreateCycle, buildActiveGraph } from "./dag";
-import type { Edge, GraphData, Priority, Task } from "../types";
+import type { Edge, GraphData, Priority, Tab, Task } from "../types";
 
 /**
  * Pure data operations over `GraphData`. Each function returns a new
@@ -100,15 +100,18 @@ export type RemoveTaskResult =
 export function removeTask(data: GraphData, id: string): RemoveTaskResult {
   const task = data.tasks.find((t) => t.id === id);
   if (!task) return { ok: false, error: "task_not_found" };
-  return {
-    ok: true,
-    data: {
-      ...data,
-      tasks: data.tasks.filter((t) => t.id !== id),
-      edges: data.edges.filter((e) => e.from !== id && e.to !== id),
-    },
-    removedTask: task,
+  const cleaned: GraphData = {
+    ...data,
+    tasks: data.tasks.filter((t) => t.id !== id),
+    edges: data.edges.filter((e) => e.from !== id && e.to !== id),
   };
+  if (cleaned.tabs) {
+    cleaned.tabs = cleaned.tabs.map((tab) => {
+      const filtered = tab.taskIds.filter((tid) => tid !== id);
+      return filtered.length === tab.taskIds.length ? tab : { ...tab, taskIds: filtered };
+    });
+  }
+  return { ok: true, data: cleaned, removedTask: task };
 }
 
 export type AddEdgeResult =
@@ -157,4 +160,99 @@ export function removeEdge(data: GraphData, args: { from: string; to: string }):
 
 export function findTask(data: GraphData, id: string): Task | null {
   return data.tasks.find((t) => t.id === id) ?? null;
+}
+
+// ─── tab mutations ────────────────────────────────────────────────────
+
+function ensureTabs(data: GraphData): Tab[] {
+  return data.tabs ?? [];
+}
+
+export function createTab(
+  data: GraphData,
+  args: { name: string; taskIds?: string[] },
+): { data: GraphData; tab: Tab } {
+  const tab: Tab = {
+    id: generateId(),
+    name: args.name,
+    taskIds: args.taskIds ?? [],
+  };
+  return {
+    data: { ...data, tabs: [...ensureTabs(data), tab] },
+    tab,
+  };
+}
+
+export type RenameTabResult =
+  | { ok: true; data: GraphData; tab: Tab }
+  | { ok: false; error: "tab_not_found" };
+
+export function renameTab(data: GraphData, id: string, name: string): RenameTabResult {
+  const tabs = ensureTabs(data);
+  const idx = tabs.findIndex((t) => t.id === id);
+  if (idx < 0) return { ok: false, error: "tab_not_found" };
+  const updated = { ...tabs[idx]!, name };
+  const next = tabs.slice();
+  next[idx] = updated;
+  return { ok: true, data: { ...data, tabs: next }, tab: updated };
+}
+
+export type DeleteTabResult =
+  | { ok: true; data: GraphData }
+  | { ok: false; error: "tab_not_found" };
+
+export function deleteTab(data: GraphData, id: string): DeleteTabResult {
+  const tabs = ensureTabs(data);
+  if (!tabs.some((t) => t.id === id)) return { ok: false, error: "tab_not_found" };
+  return { ok: true, data: { ...data, tabs: tabs.filter((t) => t.id !== id) } };
+}
+
+export type MoveToTabResult =
+  | { ok: true; data: GraphData; tab: Tab; removedEdges: Edge[] }
+  | { ok: false; error: "tab_not_found" };
+
+export function moveTasksToTab(
+  data: GraphData,
+  tabId: string,
+  taskIds: string[],
+): MoveToTabResult {
+  const tabs = ensureTabs(data);
+  const idx = tabs.findIndex((t) => t.id === tabId);
+  if (idx < 0) return { ok: false, error: "tab_not_found" };
+
+  const moving = new Set(taskIds);
+
+  // Remove these tasks from any other tab they might be in
+  let next = tabs.map((t, i) => {
+    if (i === idx) return t;
+    const filtered = t.taskIds.filter((id) => !moving.has(id));
+    return filtered.length === t.taskIds.length ? t : { ...t, taskIds: filtered };
+  });
+
+  // Add to the target tab (dedup)
+  const existing = new Set(next[idx]!.taskIds);
+  const merged = [...next[idx]!.taskIds, ...taskIds.filter((id) => !existing.has(id))];
+  next = next.slice();
+  next[idx] = { ...next[idx]!, taskIds: merged };
+
+  // Remove edges where exactly one endpoint is in the moving set
+  const removedEdges = data.edges.filter((e) => {
+    const fromMoving = moving.has(e.from);
+    const toMoving = moving.has(e.to);
+    return fromMoving !== toMoving;
+  });
+  const keptEdges = removedEdges.length > 0
+    ? data.edges.filter((e) => {
+        const fromMoving = moving.has(e.from);
+        const toMoving = moving.has(e.to);
+        return fromMoving === toMoving;
+      })
+    : data.edges;
+
+  return {
+    ok: true,
+    data: { ...data, tabs: next, edges: keptEdges },
+    tab: next[idx]!,
+    removedEdges,
+  };
 }
