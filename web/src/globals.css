@@ -199,6 +199,15 @@ body {
   stroke-dasharray: 4 4;
 }
 
+/* Light-mode canvas gets a subtle off-white so it doesn't feel flat */
+.dagdo-canvas {
+  background: hsl(240 5% 96%);
+}
+
+.dark .dagdo-canvas {
+  background: transparent;
+}
+
 /* Space+drag pan cursor */
 .dagdo-canvas.is-space-down .react-flow__pane {
   cursor: grab;
