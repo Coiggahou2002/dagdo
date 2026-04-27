@@ -17,10 +17,17 @@ export interface Edge {
   to: TaskId;
 }
 
+export interface Tab {
+  id: string;
+  name: string;
+  taskIds: TaskId[];
+}
+
 export interface GraphData {
   version: 1;
   tasks: Task[];
   edges: Edge[];
+  tabs?: Tab[];
 }
 
 export interface AdjacencyGraph {

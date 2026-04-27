@@ -12,27 +12,32 @@ import {
   type NodeChange,
   type EdgeChange,
   type NodeTypes,
+  type OnSelectionChangeFunc,
   type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Toaster, toast } from "sonner";
-import { Sun, Moon, Plus } from "lucide-react";
+import { Sun, Moon, Plus, ArrowRightFromLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
 import { layoutGraph } from "./layout";
 import {
   ApiError,
   createEdge,
+  createTabApi,
   createTask,
   deleteEdge,
+  deleteTabApi,
   deleteTask,
+  renameTabApi,
   updateTask,
   type TaskPatch,
 } from "./api";
 import { TaskNode, type TaskNodeData } from "./TaskNode";
 import { DraftNode, type DraftNodeData } from "./DraftNode";
 import { FocusPanel } from "./FocusPanel";
-import type { GraphData, Priority } from "./types";
+import { TabBar, DEFAULT_TAB_ID } from "./TabBar";
+import type { GraphData, Priority, Tab } from "./types";
 
 const EMPTY: GraphData = { version: 1, tasks: [], edges: [] };
 
@@ -63,6 +68,9 @@ export function App() {
   const [nodes, setNodes] = useState<FlowNode<TaskNodeData>[]>([]);
   const [edges, setEdges] = useState<FlowEdge[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const [activeTabId, setActiveTabId] = useState<string>(DEFAULT_TAB_ID);
+  const [boxSelected, setBoxSelected] = useState<string[]>([]);
 
   const userPositioned = useRef(new Set<string>());
   const dragMovedRef = useRef(false);
@@ -103,6 +111,68 @@ export function App() {
     };
   }, []);
 
+  // ─── tab-filtered view ───────────────────────────────────────────────
+  const tabs = useMemo<Tab[]>(() => graph.tabs ?? [], [graph]);
+
+  const { visibleTasks, visibleEdges } = useMemo(() => {
+    if (activeTabId === DEFAULT_TAB_ID) {
+      return { visibleTasks: graph.tasks, visibleEdges: graph.edges };
+    }
+    const tab = tabs.find((t) => t.id === activeTabId);
+    if (!tab) return { visibleTasks: graph.tasks, visibleEdges: graph.edges };
+    const idSet = new Set(tab.taskIds);
+    const vTasks = graph.tasks.filter((t) => idSet.has(t.id));
+    const vEdges = graph.edges.filter((e) => idSet.has(e.from) && idSet.has(e.to));
+    return { visibleTasks: vTasks, visibleEdges: vEdges };
+  }, [graph, tabs, activeTabId]);
+
+  // If active tab is deleted, fall back to default
+  useEffect(() => {
+    if (activeTabId !== DEFAULT_TAB_ID && !tabs.some((t) => t.id === activeTabId)) {
+      setActiveTabId(DEFAULT_TAB_ID);
+    }
+  }, [tabs, activeTabId]);
+
+  // ─── tab handlers ───────────────────────────────────────────────────
+  const handleCreateTab = useCallback(async (name: string) => {
+    try {
+      const tab = await createTabApi({ name });
+      setActiveTabId(tab.id);
+    } catch (err) {
+      toast.error(formatError("Create tab failed", err));
+    }
+  }, []);
+
+  const handleRenameTab = useCallback(async (id: string, name: string) => {
+    try {
+      await renameTabApi(id, name);
+    } catch (err) {
+      toast.error(formatError("Rename tab failed", err));
+    }
+  }, []);
+
+  const handleDeleteTab = useCallback(async (id: string) => {
+    try {
+      await deleteTabApi(id);
+      if (activeTabId === id) setActiveTabId(DEFAULT_TAB_ID);
+    } catch (err) {
+      toast.error(formatError("Delete tab failed", err));
+    }
+  }, [activeTabId]);
+
+  const handleMoveToNewTab = useCallback(async (taskIds: string[]) => {
+    if (taskIds.length === 0) return;
+    try {
+      const tab = await createTabApi({ name: `Tab ${tabs.length + 1}`, taskIds });
+      if (tab.id) {
+        setActiveTabId(tab.id);
+        toast.success(`Moved ${taskIds.length} tasks to "${tab.name}"`);
+      }
+    } catch (err) {
+      toast.error(formatError("Move failed", err));
+    }
+  }, [tabs]);
+
   // ─── mutation handlers ───────────────────────────────────────────────
   const handleRename = useCallback((id: string, title: string) => {
     updateTask(id, { title }).catch((err: unknown) => {
@@ -127,15 +197,15 @@ export function App() {
     setSelectedId(null);
   }, []);
 
-  // ─── reconcile Flow state whenever server state changes ──────────────
+  // ─── reconcile Flow state whenever server state or active tab changes ─
   useEffect(() => {
-    const autoLayout = layoutGraph(graph.tasks, graph.edges);
+    const autoLayout = layoutGraph(visibleTasks, visibleEdges);
     const autoById = new Map(autoLayout.map((n) => [n.id, n]));
 
     setNodes((current) => {
       const positionById = new Map(current.map((n) => [n.id, n.position]));
 
-      return graph.tasks.map<FlowNode<TaskNodeData>>((task) => {
+      return visibleTasks.map<FlowNode<TaskNodeData>>((task) => {
         const auto = autoById.get(task.id);
         const autoPos = auto ? { x: auto.x, y: auto.y } : { x: 0, y: 0 };
         const preserved = userPositioned.current.has(task.id) ? positionById.get(task.id) : undefined;
@@ -158,7 +228,7 @@ export function App() {
       });
     });
 
-    const aliveIds = new Set(graph.tasks.map((t) => t.id));
+    const aliveIds = new Set(visibleTasks.map((t) => t.id));
     for (const id of userPositioned.current) {
       if (!aliveIds.has(id)) userPositioned.current.delete(id);
     }
@@ -167,7 +237,7 @@ export function App() {
     }
 
     setEdges(
-      graph.edges.map<FlowEdge>((e) => {
+      visibleEdges.map<FlowEdge>((e) => {
         const fromTask = graph.tasks.find((t) => t.id === e.from);
         const dashed = fromTask?.doneAt != null;
         return {
@@ -179,7 +249,7 @@ export function App() {
         };
       }),
     );
-  }, [graph, handleRename, handlePatch, handleDelete, handleClosePopover, selectedId]);
+  }, [graph, visibleTasks, visibleEdges, handleRename, handlePatch, handleDelete, handleClosePopover, selectedId]);
 
   // ─── React Flow event handlers ───────────────────────────────────────
   const onNodesChange = useCallback((changes: NodeChange[]) => {
@@ -367,6 +437,17 @@ export function App() {
     };
   }, []);
 
+  // ─── box-select tracking ─────────────────────────────────────────────
+  const onSelectionChange = useCallback<OnSelectionChangeFunc>(({ nodes: selected }) => {
+    const ids = selected
+      .filter((n) => !isDraftId(n.id))
+      .map((n) => n.id);
+    setBoxSelected((prev) => {
+      if (prev.length === ids.length && prev.every((id, i) => id === ids[i])) return prev;
+      return ids;
+    });
+  }, []);
+
   // ─── "add task" button ───────────────────────────────────────────────
   const onAddTask = useCallback(async () => {
     const title = window.prompt("New task title:");
@@ -490,6 +571,15 @@ export function App() {
         }}
       />
 
+      <TabBar
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onSelect={setActiveTabId}
+        onCreate={handleCreateTab}
+        onRename={handleRenameTab}
+        onDelete={handleDeleteTab}
+      />
+
       <div className="flex-1 min-h-0 flex">
         <FocusPanel
           tasks={readyTasks}
@@ -497,16 +587,16 @@ export function App() {
           onFocus={handleFocusNode}
           onPriorityChange={handleFocusPriorityChange}
         />
-        {graph.tasks.length === 0 ? (
+        {visibleTasks.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-            <p>No tasks yet.</p>
+            <p>{activeTabId === DEFAULT_TAB_ID ? "No tasks yet." : "No tasks in this tab."}</p>
             <Button onClick={onAddTask}>
               <Plus className="h-4 w-4" />
               Add your first task
             </Button>
           </div>
         ) : (
-          <div className={`flex-1 h-full${isSpaceDown ? " dagdo-canvas is-space-down" : " dagdo-canvas"}`}>
+          <div className={`flex-1 h-full relative${isSpaceDown ? " dagdo-canvas is-space-down" : " dagdo-canvas"}`}>
             <ReactFlow
               nodes={allNodes}
               edges={edges}
@@ -524,7 +614,9 @@ export function App() {
               onPaneClick={onPaneClick}
               onPaneMouseMove={onPaneMouseMove}
               onPaneMouseLeave={onPaneMouseLeave}
+              onSelectionChange={onSelectionChange}
               panOnDrag={isSpaceDown ? PAN_BUTTONS_SPACE : PAN_BUTTONS_DEFAULT}
+              selectionOnDrag={!isSpaceDown}
               colorMode={resolved}
               fitView
               proOptions={{ hideAttribution: true }}
@@ -539,6 +631,20 @@ export function App() {
                 style={{ left: ghost.clientX, top: ghost.clientY }}
                 aria-hidden="true"
               />
+            )}
+            {boxSelected.length >= 2 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10"
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <Button
+                  size="sm"
+                  className="shadow-lg gap-1.5"
+                  onClick={() => handleMoveToNewTab(boxSelected)}
+                >
+                  <ArrowRightFromLine className="h-3.5 w-3.5" />
+                  Move {boxSelected.length} tasks to new tab
+                </Button>
+              </div>
             )}
           </div>
         )}

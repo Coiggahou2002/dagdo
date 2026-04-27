@@ -6,9 +6,13 @@ import { globalDataFile, loadGraph, saveGraph } from "../storage";
 import {
   addEdge,
   addTask,
+  createTab,
+  deleteTab,
   findTask,
+  moveTasksToTab,
   removeEdge,
   removeTask,
+  renameTab,
   updateTask,
   type TaskPatch,
 } from "../graph/mutations";
@@ -103,6 +107,29 @@ async function handleRequest(
   if (method === "DELETE" && url === "/api/edges") {
     await handleDeleteEdge(req, res, broadcast);
     return;
+  }
+
+  if (method === "POST" && url === "/api/tabs") {
+    await handleCreateTab(req, res, broadcast);
+    return;
+  }
+
+  if (method === "POST" && url === "/api/tabs/move") {
+    await handleMoveToTab(req, res, broadcast);
+    return;
+  }
+
+  const tabIdMatch = /^\/api\/tabs\/([0-9a-f]{1,12})$/.exec(url);
+  if (tabIdMatch) {
+    const id = tabIdMatch[1]!;
+    if (method === "PATCH") {
+      await handleRenameTab(req, res, broadcast, id);
+      return;
+    }
+    if (method === "DELETE") {
+      await handleDeleteTab(res, broadcast, id);
+      return;
+    }
   }
 
   const taskIdMatch = /^\/api\/tasks\/([0-9a-f]{1,12})$/.exec(url);
@@ -260,6 +287,86 @@ async function handleDeleteEdge(
   broadcast();
   res.statusCode = 204;
   res.end();
+}
+
+// ─── tab writes ──────────────────────────────────────────────────────
+
+async function handleCreateTab(
+  req: IncomingMessage,
+  res: ServerResponse,
+  broadcast: () => void,
+): Promise<void> {
+  const body = await readJsonBody(req);
+  if (!body || typeof body !== "object") return sendJson(res, 400, { error: "invalid_body" });
+  const b = body as Record<string, unknown>;
+  const name = typeof b.name === "string" ? b.name.trim() : "";
+  if (name.length === 0) return sendJson(res, 400, { error: "invalid_name" });
+  const taskIds = Array.isArray(b.taskIds)
+    ? b.taskIds.filter((id): id is string => typeof id === "string")
+    : undefined;
+
+  const graph = await loadGraph();
+  const { data, tab } = createTab(graph, { name, taskIds });
+  await saveGraph(data, `tab: create "${tab.name}"`);
+  broadcast();
+  sendJson(res, 201, { tab });
+}
+
+async function handleRenameTab(
+  req: IncomingMessage,
+  res: ServerResponse,
+  broadcast: () => void,
+  id: string,
+): Promise<void> {
+  const body = await readJsonBody(req);
+  if (!body || typeof body !== "object") return sendJson(res, 400, { error: "invalid_body" });
+  const b = body as Record<string, unknown>;
+  const name = typeof b.name === "string" ? b.name.trim() : "";
+  if (name.length === 0) return sendJson(res, 400, { error: "invalid_name" });
+
+  const graph = await loadGraph();
+  const result = renameTab(graph, id, name);
+  if (!result.ok) return sendJson(res, 404, { error: result.error });
+
+  await saveGraph(result.data, `tab: rename → "${name}"`);
+  broadcast();
+  sendJson(res, 200, { tab: result.tab });
+}
+
+async function handleDeleteTab(
+  res: ServerResponse,
+  broadcast: () => void,
+  id: string,
+): Promise<void> {
+  const graph = await loadGraph();
+  const result = deleteTab(graph, id);
+  if (!result.ok) return sendJson(res, 404, { error: result.error });
+
+  await saveGraph(result.data, "tab: delete");
+  broadcast();
+  res.statusCode = 204;
+  res.end();
+}
+
+async function handleMoveToTab(
+  req: IncomingMessage,
+  res: ServerResponse,
+  broadcast: () => void,
+): Promise<void> {
+  const body = await readJsonBody(req);
+  if (!body || typeof body !== "object") return sendJson(res, 400, { error: "invalid_body" });
+  const b = body as Record<string, unknown>;
+  if (typeof b.tabId !== "string") return sendJson(res, 400, { error: "invalid_tab_id" });
+  if (!Array.isArray(b.taskIds)) return sendJson(res, 400, { error: "invalid_task_ids" });
+  const taskIds = b.taskIds.filter((id): id is string => typeof id === "string");
+
+  const graph = await loadGraph();
+  const result = moveTasksToTab(graph, b.tabId, taskIds);
+  if (!result.ok) return sendJson(res, 404, { error: result.error });
+
+  await saveGraph(result.data, `tab: move ${taskIds.length} tasks → "${result.tab.name}"`);
+  broadcast();
+  sendJson(res, 200, { tab: result.tab, removedEdges: result.removedEdges });
 }
 
 function isPriority(value: unknown): value is Priority {
