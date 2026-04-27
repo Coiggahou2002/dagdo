@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-04-27
+
 ## [0.16.0] - 2026-04-24
 
 - `dagdo ui` adds a Focus panel on the left side showing ready tasks (in-degree = 0), grouped by priority. Click a task to pan the canvas to it and open its popover; hover to reveal a check button that marks it done; drag tasks between priority groups to change priority. Empty state shows a hint when no tasks are actionable. (#42)
