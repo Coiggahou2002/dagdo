@@ -442,7 +442,10 @@ export function App() {
     const ids = selected
       .filter((n) => !isDraftId(n.id))
       .map((n) => n.id);
-    setBoxSelected(ids);
+    setBoxSelected((prev) => {
+      if (prev.length === ids.length && prev.every((id, i) => id === ids[i])) return prev;
+      return ids;
+    });
   }, []);
 
   // ─── "add task" button ───────────────────────────────────────────────
@@ -630,7 +633,9 @@ export function App() {
               />
             )}
             {boxSelected.length >= 2 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10"
+                onPointerDown={(e) => e.stopPropagation()}
+              >
                 <Button
                   size="sm"
                   className="shadow-lg gap-1.5"
