@@ -30,6 +30,7 @@ import {
   deleteEdge,
   deleteTabApi,
   deleteTask,
+  moveTasksToTabApi,
   renameTabApi,
   updateTask,
   type TaskPatch,
@@ -170,12 +171,11 @@ export function App() {
   const handleMoveToNewTab = useCallback(async (taskIds: string[]) => {
     if (taskIds.length === 0) return;
     try {
-      const tab = await createTabApi({ name: `Tab ${tabs.length + 1}`, taskIds });
-      if (tab.id) {
-        pendingFitViewRef.current = tab.id;
-        setActiveTabId(tab.id);
-        toast.success(`Moved ${taskIds.length} tasks to "${tab.name}"`);
-      }
+      const tab = await createTabApi({ name: `Tab ${tabs.length + 1}` });
+      await moveTasksToTabApi(tab.id, taskIds);
+      pendingFitViewRef.current = tab.id;
+      setActiveTabId(tab.id);
+      toast.success(`Moved ${taskIds.length} tasks to "${tab.name}"`);
     } catch (err) {
       toast.error(formatError("Move failed", err));
     }
