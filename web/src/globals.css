@@ -186,7 +186,7 @@ body {
 }
 
 .react-flow__edge-path {
-  stroke: var(--border) !important;
+  stroke: color-mix(in srgb, var(--muted-foreground) 45%, var(--background)) !important;
   stroke-width: 1.5;
 }
 
@@ -195,7 +195,8 @@ body {
 }
 
 .react-flow__edge.edge-done .react-flow__edge-path {
-  stroke: var(--muted-foreground) !important;
+  stroke: color-mix(in srgb, var(--muted-foreground) 35%, var(--background)) !important;
+  stroke-width: 1.2;
   stroke-dasharray: 4 4;
 }
 
