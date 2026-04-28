@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- `dagdo ui` visual polish:
+  - Edge contrast — both active solid and done dashed edges now blend `--muted-foreground` into the background at 45% / 35% so they share a tonal family. Active edges read as the load-bearing structure and done ones recede; previously the colors were swapped (dashed-done was darker than solid-active).
+  - Ready-node accent — the "next to do" nodes (in-degree 0) used to fill with `bg-primary` (near-black in light mode) which clashed with the white blocked nodes around them. Now they share the white card background but get a 2px green border, a soft downward green shadow, a faint green inner tint, and dark-green text — visually emphatic without the harsh black-vs-white contrast.
+
 ## [0.18.0] - 2026-04-28
 
 - `dagdo ui` adds a layout-mode toggle in the top-right nav (between the "hide completed" checkbox and the theme button). New default is mindmap mode: the DAG flows left-to-right with edges entering on the left side of each node and exiting on the right (nodes themselves stay horizontal so titles remain readable), and disconnected components stack vertically alongside each other. The previous top-down tree layout is still available via the toggle. Preference persists in `localStorage` (`dagdo-layout-mode`); the view auto-fits after a switch and any user-dragged positions are dropped, since stale coordinates from the other orientation would otherwise pin nodes off-grid.

@@ -102,7 +102,7 @@ function TaskNodeImpl(props: NodeProps) {
       <div
         className={cn(
           "rounded-lg px-4 py-3 min-w-[160px] max-w-[280px] shadow-sm border cursor-pointer transition-colors",
-          state === "ready" && "bg-primary text-primary-foreground",
+          state === "ready" && "bg-green-500/8 text-green-800 dark:bg-green-400/10 dark:text-green-300 border-2 border-green-500 dark:border-green-400 shadow-[0_8px_20px_-4px_rgba(34,197,94,0.3)] dark:shadow-[0_8px_20px_-4px_rgba(74,222,128,0.3)]",
           state === "blocked" && "bg-card text-card-foreground border-border",
           state === "done" && "bg-muted text-muted-foreground border-border",
         )}
