@@ -8,6 +8,7 @@ import {
 } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import type { NodeState, Tab, Task } from "./types";
+import type { LayoutMode } from "./layout";
 import { TaskPopover } from "./TaskPopover";
 import type { TaskPatch } from "./api";
 
@@ -15,6 +16,7 @@ export interface TaskNodeData extends Record<string, unknown> {
   task: Task;
   state: NodeState;
   isPopoverOpen: boolean;
+  layoutMode: LayoutMode;
   onRename: (id: string, title: string) => void;
   onPatch: (id: string, patch: TaskPatch) => void;
   onDelete: (id: string) => void;
@@ -28,7 +30,9 @@ const POPOVER_OFFSET = 10;
 const VIEWPORT_MARGIN = 8;
 
 function TaskNodeImpl(props: NodeProps) {
-  const { task, state, isPopoverOpen, onRename, onPatch, onDelete, onClosePopover, tabs, canMoveToTab, onMoveToTab } = props.data as TaskNodeData;
+  const { task, state, isPopoverOpen, layoutMode, onRename, onPatch, onDelete, onClosePopover, tabs, canMoveToTab, onMoveToTab } = props.data as TaskNodeData;
+  const targetPos = layoutMode === "mindmap" ? Position.Left : Position.Top;
+  const sourcePos = layoutMode === "mindmap" ? Position.Right : Position.Bottom;
   const selected = isPopoverOpen === true;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
@@ -94,7 +98,7 @@ function TaskNodeImpl(props: NodeProps) {
 
   return (
     <>
-      <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={targetPos} />
       <div
         className={cn(
           "rounded-lg px-4 py-3 min-w-[160px] max-w-[280px] shadow-sm border cursor-pointer transition-colors",
@@ -132,7 +136,7 @@ function TaskNodeImpl(props: NodeProps) {
           <div className="text-xs mt-1 opacity-70">[{task.tags.join(", ")}]</div>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={sourcePos} />
 
       <NodeToolbar
         isVisible={selected && !editing}

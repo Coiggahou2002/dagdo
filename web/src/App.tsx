@@ -18,12 +18,12 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Toaster, toast } from "sonner";
-import { Sun, Moon, Plus, ArrowRightFromLine } from "lucide-react";
+import { Sun, Moon, Plus, ArrowRightFromLine, Network, Workflow } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useTheme } from "@/components/theme-provider";
-import { layoutGraph } from "./layout";
+import { layoutGraph, type LayoutMode } from "./layout";
 import {
   ApiError,
   createEdge,
@@ -58,6 +58,7 @@ const PAN_BUTTONS_SPACE: number[] = [0, 1, 2];
 
 const NODE_WIDTH = 280;
 const NODE_HEIGHT = 48;
+const LAYOUT_MODE_STORAGE_KEY = "dagdo-layout-mode";
 const DRAFT_NODE_ID_PREFIX = "__dagdo_draft_";
 const draftNodeId = (seq: number): string => `${DRAFT_NODE_ID_PREFIX}${seq}`;
 const isDraftId = (id: string): boolean => id.startsWith(DRAFT_NODE_ID_PREFIX);
@@ -73,6 +74,11 @@ export function App() {
   const [edges, setEdges] = useState<FlowEdge[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [layoutMode, setLayoutModeState] = useState<LayoutMode>(() => {
+    if (typeof window === "undefined") return "tree";
+    const stored = localStorage.getItem(LAYOUT_MODE_STORAGE_KEY);
+    return stored === "mindmap" ? "mindmap" : "tree";
+  });
 
   const [activeTabId, setActiveTabId] = useState<string>(DEFAULT_TAB_ID);
   const [boxSelected, setBoxSelected] = useState<string[]>([]);
@@ -220,6 +226,18 @@ export function App() {
     }
   }, []);
 
+  const setLayoutMode = useCallback((mode: LayoutMode) => {
+    // Stale drag positions from the previous orientation would override the
+    // fresh dagre layout — drop them so the new mode actually takes effect.
+    userPositioned.current.clear();
+    setLayoutModeState(mode);
+    if (typeof window !== "undefined") localStorage.setItem(LAYOUT_MODE_STORAGE_KEY, mode);
+    // Refit after the new layout has been applied to nodes.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => flowRef.current?.fitView({ duration: 300, padding: 0.15 }));
+    });
+  }, []);
+
   // ─── hide-completed filter (applied on top of tab filter) ────────────
   const displayedTasks = useMemo(
     () => (hideCompleted ? visibleTasks.filter((t) => t.doneAt == null) : visibleTasks),
@@ -234,7 +252,7 @@ export function App() {
 
   // ─── reconcile Flow state whenever server state or active tab changes ─
   useEffect(() => {
-    const autoLayout = layoutGraph(displayedTasks, displayedEdges);
+    const autoLayout = layoutGraph(displayedTasks, displayedEdges, layoutMode);
     const autoById = new Map(autoLayout.map((n) => [n.id, n]));
 
     setNodes((current) => {
@@ -254,6 +272,7 @@ export function App() {
             task,
             state: auto?.state ?? "blocked",
             isPopoverOpen: selectedId === task.id,
+            layoutMode,
             onRename: handleRename,
             onPatch: handlePatch,
             onDelete: handleDelete,
@@ -288,7 +307,7 @@ export function App() {
         };
       }),
     );
-  }, [displayedTasks, displayedEdges, tabs, handleRename, handlePatch, handleDelete, handleClosePopover, handleMoveTaskToTab, selectedId]);
+  }, [displayedTasks, displayedEdges, tabs, layoutMode, handleRename, handlePatch, handleDelete, handleClosePopover, handleMoveTaskToTab, selectedId]);
 
   // fitView after tab switch — fires once the target tab's nodes are actually populated
   useEffect(() => {
@@ -419,6 +438,7 @@ export function App() {
             task,
             state: "ready" as const,
             isPopoverOpen: false,
+            layoutMode,
             onRename: handleRename,
             onPatch: handlePatch,
             onDelete: handleDelete,
@@ -451,7 +471,7 @@ export function App() {
         setDraft((cur) => (cur && cur.id === draftId ? null : cur));
       }
     },
-    [activeTabId, tabs, handleRename, handlePatch, handleDelete, handleClosePopover, handleMoveTaskToTab],
+    [activeTabId, tabs, layoutMode, handleRename, handlePatch, handleDelete, handleClosePopover, handleMoveTaskToTab],
   );
 
   const handleDraftCancel = useCallback((draftId: number) => {
@@ -626,6 +646,15 @@ export function App() {
               隐藏已完成的节点
             </Label>
           </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setLayoutMode(layoutMode === "tree" ? "mindmap" : "tree")}
+            aria-label="Toggle layout"
+            title={layoutMode === "tree" ? "Switch to mindmap layout" : "Switch to tree layout"}
+          >
+            {layoutMode === "tree" ? <Network className="h-4 w-4" /> : <Workflow className="h-4 w-4" />}
+          </Button>
           <Button variant="ghost" size="icon" onClick={cycleTheme} aria-label="Toggle theme">
             {resolved === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
