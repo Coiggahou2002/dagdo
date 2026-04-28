@@ -8,6 +8,8 @@ const DEFAULT_TAB_ID = "__default__";
 interface TabBarProps {
   tabs: Tab[];
   activeTabId: string;
+  /** Per-tab "actionable now" counts, keyed by tab id (and DEFAULT_TAB_ID). */
+  readyCounts: Map<string, number>;
   onSelect: (id: string) => void;
   onCreate: (name: string) => void;
   onRename: (id: string, name: string) => void;
@@ -16,7 +18,7 @@ interface TabBarProps {
 
 export { DEFAULT_TAB_ID };
 
-export function TabBar({ tabs, activeTabId, onSelect, onCreate, onRename, onDelete }: TabBarProps) {
+export function TabBar({ tabs, activeTabId, readyCounts, onSelect, onCreate, onRename, onDelete }: TabBarProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
@@ -67,6 +69,7 @@ export function TabBar({ tabs, activeTabId, onSelect, onCreate, onRename, onDele
         active={activeTabId === DEFAULT_TAB_ID}
         editing={editingId === DEFAULT_TAB_ID}
         editDraft={editDraft}
+        readyCount={readyCounts.get(DEFAULT_TAB_ID) ?? 0}
         inputRef={editingId === DEFAULT_TAB_ID ? inputRef : undefined}
         onSelect={() => onSelect(DEFAULT_TAB_ID)}
         onDoubleClick={() => {}}
@@ -84,6 +87,7 @@ export function TabBar({ tabs, activeTabId, onSelect, onCreate, onRename, onDele
           active={activeTabId === tab.id}
           editing={editingId === tab.id}
           editDraft={editDraft}
+          readyCount={readyCounts.get(tab.id) ?? 0}
           inputRef={editingId === tab.id ? inputRef : undefined}
           onSelect={() => onSelect(tab.id)}
           onDoubleClick={() => startRename(tab.id, tab.name)}
@@ -114,6 +118,7 @@ interface TabItemProps {
   active: boolean;
   editing: boolean;
   editDraft: string;
+  readyCount: number;
   inputRef?: React.Ref<HTMLInputElement>;
   onSelect: () => void;
   onDoubleClick: () => void;
@@ -129,6 +134,7 @@ function TabItem({
   active,
   editing,
   editDraft,
+  readyCount,
   inputRef,
   onSelect,
   onDoubleClick,
@@ -163,6 +169,14 @@ function TabItem({
         />
       ) : (
         <span className="truncate max-w-[120px]">{name}</span>
+      )}
+      {!editing && readyCount > 0 && (
+        <span
+          className="ml-0.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none"
+          aria-label={`${readyCount} actionable tasks`}
+        >
+          {readyCount > 99 ? "99+" : readyCount}
+        </span>
       )}
       {closable && !editing && (
         <span

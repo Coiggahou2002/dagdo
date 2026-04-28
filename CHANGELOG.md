@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+- `dagdo ui` tab quality-of-life:
+  - Alt + 1..9 jumps between tabs (Alt+1 = the "All" view, Alt+2..9 = first eight named tabs in display order). Cmd+digit is reserved by macOS browsers for the browser's own tab switcher and can't be intercepted, so Alt is used.
+  - Each tab now shows a red badge with its actionable-now count — tasks in that tab that are not done and have no in-tab blocker. Updates live alongside the rest of the graph state.
+  - The Focus side-panel scopes to the active tab. Switching tabs reshapes the panel so it only lists tasks belonging to that tab; the "All" view shows tasks not assigned to any named tab. The header count next to "Focus" matches the badge on the active tab.
+
 ## [0.18.1] - 2026-04-28
 
 - `dagdo ui` visual polish:

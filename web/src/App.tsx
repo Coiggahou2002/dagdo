@@ -41,7 +41,27 @@ import { TaskNode, type TaskNodeData } from "./TaskNode";
 import { DraftNode, type DraftNodeData } from "./DraftNode";
 import { FocusPanel } from "./FocusPanel";
 import { TabBar, DEFAULT_TAB_ID } from "./TabBar";
-import type { GraphData, Priority, Tab } from "./types";
+import type { Edge, GraphData, Priority, Tab, Task } from "./types";
+
+/**
+ * "Ready" inside a closed tab subset: not done, and no incoming edge from a
+ * not-yet-done task that's also in the subset. Cross-subset edges are ignored
+ * by construction (they're filtered out before this is called) — the
+ * move-to-tab feature already enforces closed subgraphs, so this only matters
+ * for the default tab when scoping its un-assigned tasks.
+ */
+function computeReady(tasks: Task[], edges: Edge[]): Task[] {
+  const idSet = new Set(tasks.map((t) => t.id));
+  const doneIds = new Set(tasks.filter((t) => t.doneAt != null).map((t) => t.id));
+  const blockerCount = new Map<string, number>();
+  for (const t of tasks) blockerCount.set(t.id, 0);
+  for (const e of edges) {
+    if (!idSet.has(e.from) || !idSet.has(e.to)) continue;
+    if (doneIds.has(e.from)) continue;
+    blockerCount.set(e.to, (blockerCount.get(e.to) ?? 0) + 1);
+  }
+  return tasks.filter((t) => t.doneAt == null && (blockerCount.get(t.id) ?? 0) === 0);
+}
 
 const EMPTY: GraphData = { version: 1, tasks: [], edges: [] };
 
@@ -487,6 +507,38 @@ export function App() {
     [],
   );
 
+  // Alt+1..9 jumps between tabs. Browsers reserve Cmd+1..9 on macOS for the
+  // browser's own tab switcher and won't fire keydown for those, so we use
+  // Alt (Option) — also why the Option-click create-task shortcut sits
+  // beside this without conflict. Alt+1 is the default "All" tab; Alt+2..9
+  // map to named tabs in display order.
+  useEffect(() => {
+    function onTabKey(e: KeyboardEvent): void {
+      if (!e.altKey || e.metaKey || e.ctrlKey || e.shiftKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tag = target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || target.isContentEditable) return;
+      }
+      const m = /^Digit([1-9])$/.exec(e.code);
+      if (!m) return;
+      const slot = parseInt(m[1]!, 10);
+      e.preventDefault();
+      if (slot === 1) {
+        pendingFitViewRef.current = DEFAULT_TAB_ID;
+        setActiveTabId(DEFAULT_TAB_ID);
+        return;
+      }
+      const tab = tabs[slot - 2];
+      if (tab) {
+        pendingFitViewRef.current = tab.id;
+        setActiveTabId(tab.id);
+      }
+    }
+    window.addEventListener("keydown", onTabKey);
+    return () => window.removeEventListener("keydown", onTabKey);
+  }, [tabs]);
+
   // Space-held pan mode
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent): void {
@@ -551,22 +603,34 @@ export function App() {
   }, [graph]);
 
   const readyTasks = useMemo(() => {
-    const doneIds = new Set(graph.tasks.filter((t) => t.doneAt != null).map((t) => t.id));
-    const blockerCount = new Map<string, number>();
-    for (const t of graph.tasks) blockerCount.set(t.id, 0);
-    for (const e of graph.edges) {
-      if (!doneIds.has(e.from)) {
-        blockerCount.set(e.to, (blockerCount.get(e.to) ?? 0) + 1);
-      }
-    }
     const priorityOrder: Record<Priority, number> = { high: 0, med: 1, low: 2 };
-    return graph.tasks
-      .filter((t) => t.doneAt == null && (blockerCount.get(t.id) ?? 0) === 0)
-      .sort((a, b) => {
-        const pd = priorityOrder[a.priority] - priorityOrder[b.priority];
-        if (pd !== 0) return pd;
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      });
+    return computeReady(visibleTasks, visibleEdges).sort((a, b) => {
+      const pd = priorityOrder[a.priority] - priorityOrder[b.priority];
+      if (pd !== 0) return pd;
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
+  }, [visibleTasks, visibleEdges]);
+
+  // Per-tab "actionable now" counts for the tab-bar badges. Scoping each
+  // tab's edge set to its own task set keeps blockedness consistent with
+  // what the user sees when they switch in.
+  const tabReadyCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    const namedTabs = graph.tabs ?? [];
+    const assignedIds = new Set(namedTabs.flatMap((t) => t.taskIds));
+    const defaultTasks = graph.tasks.filter((t) => !assignedIds.has(t.id));
+    const defaultIdSet = new Set(defaultTasks.map((t) => t.id));
+    const defaultEdges = graph.edges.filter(
+      (e) => defaultIdSet.has(e.from) && defaultIdSet.has(e.to),
+    );
+    counts.set(DEFAULT_TAB_ID, computeReady(defaultTasks, defaultEdges).length);
+    for (const tab of namedTabs) {
+      const idSet = new Set(tab.taskIds);
+      const tabTasks = graph.tasks.filter((t) => idSet.has(t.id));
+      const tabEdges = graph.edges.filter((e) => idSet.has(e.from) && idSet.has(e.to));
+      counts.set(tab.id, computeReady(tabTasks, tabEdges).length);
+    }
+    return counts;
   }, [graph]);
 
   const handleFocusDone = useCallback((id: string) => {
@@ -676,6 +740,7 @@ export function App() {
       <TabBar
         tabs={tabs}
         activeTabId={activeTabId}
+        readyCounts={tabReadyCounts}
         onSelect={handleSelectTab}
         onCreate={handleCreateTab}
         onRename={handleRenameTab}
