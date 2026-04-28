@@ -17,6 +17,12 @@ export interface AddTaskArgs {
   title: string;
   priority?: Priority;
   tags?: string[];
+  /**
+   * If set, the new task is also appended to this tab's `taskIds`. Caller is
+   * responsible for validating the tab exists — `addTask` assumes it does and
+   * silently no-ops the membership write if the id isn't found.
+   */
+  tabId?: string;
 }
 
 export function addTask(data: GraphData, args: AddTaskArgs): { data: GraphData; task: Task } {
@@ -28,10 +34,16 @@ export function addTask(data: GraphData, args: AddTaskArgs): { data: GraphData; 
     createdAt: new Date().toISOString(),
     doneAt: null,
   };
-  return {
-    data: { ...data, tasks: [...data.tasks, task] },
-    task,
-  };
+  let next: GraphData = { ...data, tasks: [...data.tasks, task] };
+  if (args.tabId !== undefined && next.tabs) {
+    next = {
+      ...next,
+      tabs: next.tabs.map((t) =>
+        t.id === args.tabId ? { ...t, taskIds: [...t.taskIds, task.id] } : t,
+      ),
+    };
+  }
+  return { data: next, task };
 }
 
 /**

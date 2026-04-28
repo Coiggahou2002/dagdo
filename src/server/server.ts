@@ -172,13 +172,18 @@ async function handleCreateTask(
 
   const priority = (body as Record<string, unknown>).priority;
   const tags = (body as Record<string, unknown>).tags;
+  const tabId = (body as Record<string, unknown>).tabId;
   const args = {
     title: title.trim(),
     priority: isPriority(priority) ? priority : undefined,
     tags: Array.isArray(tags) ? tags.filter((t): t is string => typeof t === "string") : undefined,
+    tabId: typeof tabId === "string" ? tabId : undefined,
   };
 
   const graph = await loadGraph();
+  if (args.tabId !== undefined && !(graph.tabs ?? []).some((t) => t.id === args.tabId)) {
+    return sendJson(res, 404, { error: "tab_not_found", id: args.tabId });
+  }
   const { data, task } = addTask(graph, args);
   await saveGraph(data, `add: ${task.title}`);
   broadcast();
