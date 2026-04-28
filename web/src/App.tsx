@@ -119,10 +119,13 @@ export function App() {
 
   const { visibleTasks, visibleEdges } = useMemo(() => {
     if (activeTabId === DEFAULT_TAB_ID) {
-      return { visibleTasks: graph.tasks, visibleEdges: graph.edges };
+      const assignedIds = new Set(tabs.flatMap((t) => t.taskIds));
+      const vTasks = graph.tasks.filter((t) => !assignedIds.has(t.id));
+      const vEdges = graph.edges.filter((e) => !assignedIds.has(e.from) && !assignedIds.has(e.to));
+      return { visibleTasks: vTasks, visibleEdges: vEdges };
     }
     const tab = tabs.find((t) => t.id === activeTabId);
-    if (!tab) return { visibleTasks: graph.tasks, visibleEdges: graph.edges };
+    if (!tab) return { visibleTasks: [], visibleEdges: [] };
     const idSet = new Set(tab.taskIds);
     const vTasks = graph.tasks.filter((t) => idSet.has(t.id));
     const vEdges = graph.edges.filter((e) => idSet.has(e.from) && idSet.has(e.to));
