@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-04-28
+
 - Fix: `dagdo ui` — new tasks created while a named tab is active now belong to that tab. Previously they fell into the "All" view because `createTask` didn't pass any tab info, so the task lived outside every tab's `taskIds`. (#52)
 
 ## [0.17.0] - 2026-04-28
