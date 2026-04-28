@@ -4,6 +4,7 @@ import {
   Background,
   Controls,
   MiniMap,
+  SelectionMode,
   applyNodeChanges,
   applyEdgeChanges,
   type Connection,
@@ -75,6 +76,7 @@ export function App() {
   const userPositioned = useRef(new Set<string>());
   const dragMovedRef = useRef(false);
   const flowRef = useRef<ReactFlowInstance<FlowNode<TaskNodeData | DraftNodeData>, FlowEdge> | null>(null);
+  const pendingFitViewRef = useRef<string | null>(null);
   const [isSpaceDown, setIsSpaceDown] = useState(false);
   const [ghost, setGhost] = useState<Ghost | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -160,11 +162,17 @@ export function App() {
     }
   }, [activeTabId]);
 
+  const handleSelectTab = useCallback((id: string) => {
+    pendingFitViewRef.current = id;
+    setActiveTabId(id);
+  }, []);
+
   const handleMoveToNewTab = useCallback(async (taskIds: string[]) => {
     if (taskIds.length === 0) return;
     try {
       const tab = await createTabApi({ name: `Tab ${tabs.length + 1}`, taskIds });
       if (tab.id) {
+        pendingFitViewRef.current = tab.id;
         setActiveTabId(tab.id);
         toast.success(`Moved ${taskIds.length} tasks to "${tab.name}"`);
       }
@@ -250,6 +258,19 @@ export function App() {
       }),
     );
   }, [graph, visibleTasks, visibleEdges, handleRename, handlePatch, handleDelete, handleClosePopover, selectedId]);
+
+  // fitView after tab switch — fires once the target tab's nodes are actually populated
+  useEffect(() => {
+    if (
+      pendingFitViewRef.current !== activeTabId ||
+      nodes.length === 0 ||
+      (activeTabId !== DEFAULT_TAB_ID && !(graph.tabs ?? []).some((t) => t.id === activeTabId))
+    ) return;
+    pendingFitViewRef.current = null;
+    requestAnimationFrame(() => {
+      flowRef.current?.fitView({ duration: 300, padding: 0.15 });
+    });
+  }, [activeTabId, nodes, graph.tabs]);
 
   // ─── React Flow event handlers ───────────────────────────────────────
   const onNodesChange = useCallback((changes: NodeChange[]) => {
@@ -574,7 +595,7 @@ export function App() {
       <TabBar
         tabs={tabs}
         activeTabId={activeTabId}
-        onSelect={setActiveTabId}
+        onSelect={handleSelectTab}
         onCreate={handleCreateTab}
         onRename={handleRenameTab}
         onDelete={handleDeleteTab}
@@ -617,6 +638,7 @@ export function App() {
               onSelectionChange={onSelectionChange}
               panOnDrag={isSpaceDown ? PAN_BUTTONS_SPACE : PAN_BUTTONS_DEFAULT}
               selectionOnDrag={!isSpaceDown}
+              selectionMode={SelectionMode.Partial}
               colorMode={resolved}
               fitView
               proOptions={{ hideAttribution: true }}
