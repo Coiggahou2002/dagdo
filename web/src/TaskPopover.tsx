@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import type { Priority, Task } from "./types";
+import type { Priority, Tab, Task } from "./types";
 
 interface TaskPopoverProps {
   task: Task;
@@ -17,12 +17,15 @@ interface TaskPopoverProps {
   }) => void;
   onDelete: () => void;
   onClose: () => void;
+  tabs: Tab[];
+  canMoveToTab: boolean;
+  onMoveToTab: (tabId: string) => void;
 }
 
 const PRIORITIES: Priority[] = ["high", "med", "low"];
 const NOTES_MAX_CHARS = 2000;
 
-export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverProps) {
+export function TaskPopover({ task, onChange, onDelete, onClose, tabs, canMoveToTab, onMoveToTab }: TaskPopoverProps) {
   const [tagDraft, setTagDraft] = useState("");
   const [titleDraft, setTitleDraft] = useState(task.title);
   const [notesDraft, setNotesDraft] = useState(task.notes ?? "");
@@ -195,6 +198,28 @@ export function TaskPopover({ task, onChange, onDelete, onClose }: TaskPopoverPr
           className="text-xs max-h-[18em]"
         />
       </div>
+
+      {/* Move to tab */}
+      {tabs.length > 0 && (
+        <div className="space-y-1.5 mb-3">
+          <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Move to tab
+          </label>
+          {canMoveToTab ? (
+            <div className="flex flex-wrap gap-1">
+              {tabs.map((t) => (
+                <Button key={t.id} variant="outline" size="sm" className="text-xs h-7" onClick={() => onMoveToTab(t.id)}>
+                  {t.name}
+                </Button>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Detach all edges first to move this task.
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Footer */}
       <div className="flex items-center justify-between pt-2 border-t border-border">

@@ -7,7 +7,7 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import { cn } from "@/lib/utils";
-import type { NodeState, Task } from "./types";
+import type { NodeState, Tab, Task } from "./types";
 import { TaskPopover } from "./TaskPopover";
 import type { TaskPatch } from "./api";
 
@@ -19,13 +19,16 @@ export interface TaskNodeData extends Record<string, unknown> {
   onPatch: (id: string, patch: TaskPatch) => void;
   onDelete: (id: string) => void;
   onClosePopover: () => void;
+  tabs: Tab[];
+  canMoveToTab: boolean;
+  onMoveToTab: (tabId: string) => void;
 }
 
 const POPOVER_OFFSET = 10;
 const VIEWPORT_MARGIN = 8;
 
 function TaskNodeImpl(props: NodeProps) {
-  const { task, state, isPopoverOpen, onRename, onPatch, onDelete, onClosePopover } = props.data as TaskNodeData;
+  const { task, state, isPopoverOpen, onRename, onPatch, onDelete, onClosePopover, tabs, canMoveToTab, onMoveToTab } = props.data as TaskNodeData;
   const selected = isPopoverOpen === true;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
@@ -142,6 +145,9 @@ function TaskNodeImpl(props: NodeProps) {
             onChange={(patch) => onPatch(task.id, patch)}
             onDelete={() => onDelete(task.id)}
             onClose={onClosePopover}
+            tabs={tabs}
+            canMoveToTab={canMoveToTab}
+            onMoveToTab={onMoveToTab}
           />
         </div>
       </NodeToolbar>

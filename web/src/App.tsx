@@ -208,6 +208,15 @@ export function App() {
     setSelectedId(null);
   }, []);
 
+  const handleMoveTaskToTab = useCallback(async (taskId: string, tabId: string) => {
+    try {
+      await moveTasksToTabApi(tabId, [taskId]);
+      toast.success("Task moved.");
+    } catch (err) {
+      toast.error(formatError("Move failed", err));
+    }
+  }, []);
+
   // ─── reconcile Flow state whenever server state or active tab changes ─
   useEffect(() => {
     const autoLayout = layoutGraph(visibleTasks, visibleEdges);
@@ -220,6 +229,7 @@ export function App() {
         const auto = autoById.get(task.id);
         const autoPos = auto ? { x: auto.x, y: auto.y } : { x: 0, y: 0 };
         const preserved = userPositioned.current.has(task.id) ? positionById.get(task.id) : undefined;
+        const canMoveToTab = !graph.edges.some((e) => e.from === task.id || e.to === task.id);
         return {
           id: task.id,
           type: "task",
@@ -233,6 +243,9 @@ export function App() {
             onPatch: handlePatch,
             onDelete: handleDelete,
             onClosePopover: handleClosePopover,
+            tabs,
+            canMoveToTab,
+            onMoveToTab: (tabId: string) => handleMoveTaskToTab(task.id, tabId),
           },
           draggable: true,
         };
@@ -260,7 +273,7 @@ export function App() {
         };
       }),
     );
-  }, [graph, visibleTasks, visibleEdges, handleRename, handlePatch, handleDelete, handleClosePopover, selectedId]);
+  }, [graph, visibleTasks, visibleEdges, tabs, handleRename, handlePatch, handleDelete, handleClosePopover, handleMoveTaskToTab, selectedId]);
 
   // fitView after tab switch — fires once the target tab's nodes are actually populated
   useEffect(() => {
@@ -392,6 +405,9 @@ export function App() {
             onPatch: handlePatch,
             onDelete: handleDelete,
             onClosePopover: handleClosePopover,
+            tabs,
+            canMoveToTab: true,
+            onMoveToTab: (tabId: string) => handleMoveTaskToTab(task.id, tabId),
           };
           if (idx >= 0) {
             const next = [...current];
@@ -664,6 +680,8 @@ export function App() {
                 <Button
                   size="sm"
                   className="shadow-lg gap-1.5"
+                  disabled={!isMovableSet(boxSelected, graph.edges)}
+                  title={!isMovableSet(boxSelected, graph.edges) ? "Selection has edges to nodes outside — cannot move" : undefined}
                   onClick={() => handleMoveToNewTab(boxSelected)}
                 >
                   <ArrowRightFromLine className="h-3.5 w-3.5" />
@@ -676,6 +694,11 @@ export function App() {
       </div>
     </div>
   );
+}
+
+function isMovableSet(taskIds: string[], allEdges: { from: string; to: string }[]): boolean {
+  const idSet = new Set(taskIds);
+  return !allEdges.some((e) => idSet.has(e.from) !== idSet.has(e.to));
 }
 
 function formatError(prefix: string, err: unknown): string {
