@@ -4,6 +4,7 @@ import {
   Background,
   Controls,
   MiniMap,
+  SelectionMode,
   applyNodeChanges,
   applyEdgeChanges,
   type Connection,
@@ -12,11 +13,12 @@ import {
   type NodeChange,
   type EdgeChange,
   type NodeTypes,
+  type OnSelectionChangeFunc,
   type ReactFlowInstance,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Toaster, toast } from "sonner";
-import { Sun, Moon, Plus } from "lucide-react";
+import { Sun, Moon, Plus, ArrowRightFromLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -25,16 +27,21 @@ import { layoutGraph } from "./layout";
 import {
   ApiError,
   createEdge,
+  createTabApi,
   createTask,
   deleteEdge,
+  deleteTabApi,
   deleteTask,
+  moveTasksToTabApi,
+  renameTabApi,
   updateTask,
   type TaskPatch,
 } from "./api";
 import { TaskNode, type TaskNodeData } from "./TaskNode";
 import { DraftNode, type DraftNodeData } from "./DraftNode";
 import { FocusPanel } from "./FocusPanel";
-import type { GraphData, Priority } from "./types";
+import { TabBar, DEFAULT_TAB_ID } from "./TabBar";
+import type { GraphData, Priority, Tab } from "./types";
 
 const EMPTY: GraphData = { version: 1, tasks: [], edges: [] };
 
@@ -67,9 +74,13 @@ export function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hideCompleted, setHideCompleted] = useState(false);
 
+  const [activeTabId, setActiveTabId] = useState<string>(DEFAULT_TAB_ID);
+  const [boxSelected, setBoxSelected] = useState<string[]>([]);
+
   const userPositioned = useRef(new Set<string>());
   const dragMovedRef = useRef(false);
   const flowRef = useRef<ReactFlowInstance<FlowNode<TaskNodeData | DraftNodeData>, FlowEdge> | null>(null);
+  const pendingFitViewRef = useRef<string | null>(null);
   const [isSpaceDown, setIsSpaceDown] = useState(false);
   const [ghost, setGhost] = useState<Ghost | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
@@ -106,6 +117,76 @@ export function App() {
     };
   }, []);
 
+  // ─── tab-filtered view ───────────────────────────────────────────────
+  const tabs = useMemo<Tab[]>(() => graph.tabs ?? [], [graph]);
+
+  const { visibleTasks, visibleEdges } = useMemo(() => {
+    if (activeTabId === DEFAULT_TAB_ID) {
+      const assignedIds = new Set(tabs.flatMap((t) => t.taskIds));
+      const vTasks = graph.tasks.filter((t) => !assignedIds.has(t.id));
+      const vEdges = graph.edges.filter((e) => !assignedIds.has(e.from) && !assignedIds.has(e.to));
+      return { visibleTasks: vTasks, visibleEdges: vEdges };
+    }
+    const tab = tabs.find((t) => t.id === activeTabId);
+    if (!tab) return { visibleTasks: [], visibleEdges: [] };
+    const idSet = new Set(tab.taskIds);
+    const vTasks = graph.tasks.filter((t) => idSet.has(t.id));
+    const vEdges = graph.edges.filter((e) => idSet.has(e.from) && idSet.has(e.to));
+    return { visibleTasks: vTasks, visibleEdges: vEdges };
+  }, [graph, tabs, activeTabId]);
+
+  // If active tab is deleted, fall back to default
+  useEffect(() => {
+    if (activeTabId !== DEFAULT_TAB_ID && !tabs.some((t) => t.id === activeTabId)) {
+      setActiveTabId(DEFAULT_TAB_ID);
+    }
+  }, [tabs, activeTabId]);
+
+  // ─── tab handlers ───────────────────────────────────────────────────
+  const handleCreateTab = useCallback(async (name: string) => {
+    try {
+      const tab = await createTabApi({ name });
+      setActiveTabId(tab.id);
+    } catch (err) {
+      toast.error(formatError("Create tab failed", err));
+    }
+  }, []);
+
+  const handleRenameTab = useCallback(async (id: string, name: string) => {
+    try {
+      await renameTabApi(id, name);
+    } catch (err) {
+      toast.error(formatError("Rename tab failed", err));
+    }
+  }, []);
+
+  const handleDeleteTab = useCallback(async (id: string) => {
+    try {
+      await deleteTabApi(id);
+      if (activeTabId === id) setActiveTabId(DEFAULT_TAB_ID);
+    } catch (err) {
+      toast.error(formatError("Delete tab failed", err));
+    }
+  }, [activeTabId]);
+
+  const handleSelectTab = useCallback((id: string) => {
+    pendingFitViewRef.current = id;
+    setActiveTabId(id);
+  }, []);
+
+  const handleMoveToNewTab = useCallback(async (taskIds: string[]) => {
+    if (taskIds.length === 0) return;
+    try {
+      const tab = await createTabApi({ name: `Tab ${tabs.length + 1}` });
+      await moveTasksToTabApi(tab.id, taskIds);
+      pendingFitViewRef.current = tab.id;
+      setActiveTabId(tab.id);
+      toast.success(`Moved ${taskIds.length} tasks to "${tab.name}"`);
+    } catch (err) {
+      toast.error(formatError("Move failed", err));
+    }
+  }, [tabs]);
+
   // ─── mutation handlers ───────────────────────────────────────────────
   const handleRename = useCallback((id: string, title: string) => {
     updateTask(id, { title }).catch((err: unknown) => {
@@ -130,19 +211,28 @@ export function App() {
     setSelectedId(null);
   }, []);
 
-  // ─── hide-completed filter ───────────────────────────────────────────
+  const handleMoveTaskToTab = useCallback(async (taskId: string, tabId: string) => {
+    try {
+      await moveTasksToTabApi(tabId, [taskId]);
+      toast.success("Task moved.");
+    } catch (err) {
+      toast.error(formatError("Move failed", err));
+    }
+  }, []);
+
+  // ─── hide-completed filter (applied on top of tab filter) ────────────
   const displayedTasks = useMemo(
-    () => (hideCompleted ? graph.tasks.filter((t) => t.doneAt == null) : graph.tasks),
-    [hideCompleted, graph.tasks],
+    () => (hideCompleted ? visibleTasks.filter((t) => t.doneAt == null) : visibleTasks),
+    [hideCompleted, visibleTasks],
   );
 
   const displayedEdges = useMemo(() => {
-    if (!hideCompleted) return graph.edges;
+    if (!hideCompleted) return visibleEdges;
     const shownIds = new Set(displayedTasks.map((t) => t.id));
-    return graph.edges.filter((e) => shownIds.has(e.from) && shownIds.has(e.to));
-  }, [hideCompleted, displayedTasks, graph.edges]);
+    return visibleEdges.filter((e) => shownIds.has(e.from) && shownIds.has(e.to));
+  }, [hideCompleted, displayedTasks, visibleEdges]);
 
-  // ─── reconcile Flow state whenever server state changes ──────────────
+  // ─── reconcile Flow state whenever server state or active tab changes ─
   useEffect(() => {
     const autoLayout = layoutGraph(displayedTasks, displayedEdges);
     const autoById = new Map(autoLayout.map((n) => [n.id, n]));
@@ -154,6 +244,7 @@ export function App() {
         const auto = autoById.get(task.id);
         const autoPos = auto ? { x: auto.x, y: auto.y } : { x: 0, y: 0 };
         const preserved = userPositioned.current.has(task.id) ? positionById.get(task.id) : undefined;
+        const canMoveToTab = !graph.edges.some((e) => e.from === task.id || e.to === task.id);
         return {
           id: task.id,
           type: "task",
@@ -167,6 +258,9 @@ export function App() {
             onPatch: handlePatch,
             onDelete: handleDelete,
             onClosePopover: handleClosePopover,
+            tabs,
+            canMoveToTab,
+            onMoveToTab: (tabId: string) => handleMoveTaskToTab(task.id, tabId),
           },
           draggable: true,
         };
@@ -194,7 +288,20 @@ export function App() {
         };
       }),
     );
-  }, [displayedTasks, displayedEdges, handleRename, handlePatch, handleDelete, handleClosePopover, selectedId]);
+  }, [displayedTasks, displayedEdges, tabs, handleRename, handlePatch, handleDelete, handleClosePopover, handleMoveTaskToTab, selectedId]);
+
+  // fitView after tab switch — fires once the target tab's nodes are actually populated
+  useEffect(() => {
+    if (
+      pendingFitViewRef.current !== activeTabId ||
+      nodes.length === 0 ||
+      (activeTabId !== DEFAULT_TAB_ID && !(graph.tabs ?? []).some((t) => t.id === activeTabId))
+    ) return;
+    pendingFitViewRef.current = null;
+    requestAnimationFrame(() => {
+      flowRef.current?.fitView({ duration: 300, padding: 0.15 });
+    });
+  }, [activeTabId, nodes, graph.tabs]);
 
   // ─── React Flow event handlers ───────────────────────────────────────
   const onNodesChange = useCallback((changes: NodeChange[]) => {
@@ -313,6 +420,9 @@ export function App() {
             onPatch: handlePatch,
             onDelete: handleDelete,
             onClosePopover: handleClosePopover,
+            tabs,
+            canMoveToTab: true,
+            onMoveToTab: (tabId: string) => handleMoveTaskToTab(task.id, tabId),
           };
           if (idx >= 0) {
             const next = [...current];
@@ -380,6 +490,17 @@ export function App() {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
+  }, []);
+
+  // ─── box-select tracking ─────────────────────────────────────────────
+  const onSelectionChange = useCallback<OnSelectionChangeFunc>(({ nodes: selected }) => {
+    const ids = selected
+      .filter((n) => !isDraftId(n.id))
+      .map((n) => n.id);
+    setBoxSelected((prev) => {
+      if (prev.length === ids.length && prev.every((id, i) => id === ids[i])) return prev;
+      return ids;
+    });
   }, []);
 
   // ─── "add task" button ───────────────────────────────────────────────
@@ -515,6 +636,15 @@ export function App() {
         }}
       />
 
+      <TabBar
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onSelect={handleSelectTab}
+        onCreate={handleCreateTab}
+        onRename={handleRenameTab}
+        onDelete={handleDeleteTab}
+      />
+
       <div className="flex-1 min-h-0 flex">
         <FocusPanel
           tasks={readyTasks}
@@ -522,9 +652,9 @@ export function App() {
           onFocus={handleFocusNode}
           onPriorityChange={handleFocusPriorityChange}
         />
-        {graph.tasks.length === 0 ? (
+        {visibleTasks.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-            <p>No tasks yet.</p>
+            <p>{activeTabId === DEFAULT_TAB_ID ? "No tasks yet." : "No tasks in this tab."}</p>
             <Button onClick={onAddTask}>
               <Plus className="h-4 w-4" />
               Add your first task
@@ -535,7 +665,7 @@ export function App() {
             All completed tasks are hidden.
           </div>
         ) : (
-          <div className={`flex-1 h-full${isSpaceDown ? " dagdo-canvas is-space-down" : " dagdo-canvas"}`}>
+          <div className={`flex-1 h-full relative${isSpaceDown ? " dagdo-canvas is-space-down" : " dagdo-canvas"}`}>
             <ReactFlow
               nodes={allNodes}
               edges={edges}
@@ -553,7 +683,10 @@ export function App() {
               onPaneClick={onPaneClick}
               onPaneMouseMove={onPaneMouseMove}
               onPaneMouseLeave={onPaneMouseLeave}
+              onSelectionChange={onSelectionChange}
               panOnDrag={isSpaceDown ? PAN_BUTTONS_SPACE : PAN_BUTTONS_DEFAULT}
+              selectionOnDrag={!isSpaceDown}
+              selectionMode={SelectionMode.Partial}
               colorMode={resolved}
               fitView
               proOptions={{ hideAttribution: true }}
@@ -569,11 +702,32 @@ export function App() {
                 aria-hidden="true"
               />
             )}
+            {boxSelected.length >= 2 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10"
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <Button
+                  size="sm"
+                  className="shadow-lg gap-1.5"
+                  disabled={!isMovableSet(boxSelected, graph.edges)}
+                  title={!isMovableSet(boxSelected, graph.edges) ? "Selection has edges to nodes outside — cannot move" : undefined}
+                  onClick={() => handleMoveToNewTab(boxSelected)}
+                >
+                  <ArrowRightFromLine className="h-3.5 w-3.5" />
+                  Move {boxSelected.length} tasks to new tab
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
   );
+}
+
+function isMovableSet(taskIds: string[], allEdges: { from: string; to: string }[]): boolean {
+  const idSet = new Set(taskIds);
+  return !allEdges.some((e) => idSet.has(e.from) !== idSet.has(e.to));
 }
 
 function formatError(prefix: string, err: unknown): string {

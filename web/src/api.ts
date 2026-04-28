@@ -1,4 +1,4 @@
-import type { Priority, Task } from "./types";
+import type { Edge, Priority, Tab, Task } from "./types";
 
 /**
  * Thin fetch wrapper — matches the server routes in src/server/server.ts.
@@ -13,6 +13,7 @@ export type ApiErrorKind =
   | "cycle"
   | "already_exists"
   | "task_not_found"
+  | "tab_not_found"
   | "self_loop"
   | "note_too_long"
   | "invalid"
@@ -41,6 +42,7 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
     body.error === "cycle" ? "cycle" :
     body.error === "already_exists" ? "already_exists" :
     body.error === "task_not_found" ? "task_not_found" :
+    body.error === "tab_not_found" ? "tab_not_found" :
     body.error === "self_loop" ? "self_loop" :
     body.error === "note_too_long" ? "note_too_long" :
     body.error ? "invalid" :
@@ -97,4 +99,43 @@ export async function deleteEdge(from: string, to: string): Promise<void> {
     body: JSON.stringify({ from, to }),
   });
   if (!res.ok && res.status !== 404) await jsonOrThrow(res);
+}
+
+// ─── tabs ─────────────────────────────────────────────────────────────
+
+export async function createTabApi(args: { name: string; taskIds?: string[] }): Promise<Tab> {
+  const res = await fetch("/api/tabs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(args),
+  });
+  const body = await jsonOrThrow<{ tab: Tab }>(res);
+  return body.tab;
+}
+
+export async function renameTabApi(id: string, name: string): Promise<Tab> {
+  const res = await fetch(`/api/tabs/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  const body = await jsonOrThrow<{ tab: Tab }>(res);
+  return body.tab;
+}
+
+export async function deleteTabApi(id: string): Promise<void> {
+  const res = await fetch(`/api/tabs/${id}`, { method: "DELETE" });
+  if (!res.ok && res.status !== 404) await jsonOrThrow(res);
+}
+
+export async function moveTasksToTabApi(
+  tabId: string,
+  taskIds: string[],
+): Promise<{ tab: Tab; removedEdges: Edge[] }> {
+  const res = await fetch("/api/tabs/move", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tabId, taskIds }),
+  });
+  return jsonOrThrow<{ tab: Tab; removedEdges: Edge[] }>(res);
 }

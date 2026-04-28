@@ -17,10 +17,17 @@ export interface Edge {
   to: string;
 }
 
+export interface Tab {
+  id: string;
+  name: string;
+  taskIds: string[];
+}
+
 export interface GraphData {
   version: 1;
   tasks: Task[];
   edges: Edge[];
+  tabs?: Tab[];
 }
 
 export type NodeState = "ready" | "blocked" | "done";
