@@ -9,6 +9,8 @@ const NODE_HEIGHT = 64;
 // subgraph" rather than "wide edge".
 const COMPONENT_GAP = 120;
 
+export type LayoutMode = "tree" | "mindmap";
+
 export interface LaidOutNode {
   id: string;
   x: number;
@@ -21,6 +23,8 @@ interface ComponentLayout {
   nodes: LaidOutNode[];
   minX: number;
   maxX: number;
+  minY: number;
+  maxY: number;
   // Smallest (lexicographic) task id in this component — used as a stable
   // secondary sort key so that components of equal size keep their relative
   // order when tasks are added or removed.
@@ -28,19 +32,24 @@ interface ComponentLayout {
 }
 
 /**
- * Dagre top-to-bottom layout, applied per connected component. Each component
- * is offset horizontally so disconnected subgraphs are visually distinct, and
- * the component order is stable (size desc, then lex-smallest task id) so that
- * mutations inside one component don't shuffle the others. See issue #20.
+ * Dagre layout per connected component. In `mindmap` mode (default) ranks
+ * flow left-to-right and components stack vertically; in `tree` mode ranks
+ * flow top-to-bottom and components pack horizontally. Component order is
+ * stable (size desc, then lex-smallest task id) so mutations inside one
+ * component don't shuffle the others. See issue #20.
  */
-export function layoutGraph(tasks: Task[], edges: Edge[]): LaidOutNode[] {
+export function layoutGraph(
+  tasks: Task[],
+  edges: Edge[],
+  mode: LayoutMode = "mindmap",
+): LaidOutNode[] {
   if (tasks.length === 0) return [];
 
   const states = computeNodeStates(tasks, edges);
   const components = findComponents(tasks, edges);
 
   const laidOut: ComponentLayout[] = components.map((componentTasks) =>
-    layoutComponent(componentTasks, edges, states),
+    layoutComponent(componentTasks, edges, states, mode),
   );
 
   // Stable order: larger components first, ties broken by lex-smallest id.
@@ -49,15 +58,23 @@ export function layoutGraph(tasks: Task[], edges: Edge[]): LaidOutNode[] {
     return a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0;
   });
 
-  // Pack left-to-right with COMPONENT_GAP between each component's bounding box.
   const result: LaidOutNode[] = [];
-  let cursorX = 0;
-  for (const comp of laidOut) {
-    const shift = cursorX - comp.minX;
-    for (const node of comp.nodes) {
-      result.push({ ...node, x: node.x + shift });
+  if (mode === "tree") {
+    // Pack components left-to-right under the vertical tree.
+    let cursorX = 0;
+    for (const comp of laidOut) {
+      const shift = cursorX - comp.minX;
+      for (const node of comp.nodes) result.push({ ...node, x: node.x + shift });
+      cursorX += comp.maxX - comp.minX + COMPONENT_GAP;
     }
-    cursorX += comp.maxX - comp.minX + COMPONENT_GAP;
+  } else {
+    // Pack components top-to-bottom alongside the horizontal mindmap.
+    let cursorY = 0;
+    for (const comp of laidOut) {
+      const shift = cursorY - comp.minY;
+      for (const node of comp.nodes) result.push({ ...node, y: node.y + shift });
+      cursorY += comp.maxY - comp.minY + COMPONENT_GAP;
+    }
   }
 
   // Preserve the input task order in the returned array so downstream
@@ -116,11 +133,16 @@ function layoutComponent(
   componentTasks: Task[],
   allEdges: Edge[],
   states: Map<string, NodeState>,
+  mode: LayoutMode,
 ): ComponentLayout {
   const memberIds = new Set(componentTasks.map((t) => t.id));
 
   const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: "TB", nodesep: 60, ranksep: 70, marginx: 20, marginy: 20 });
+  // In LR mode keep nodes (still horizontal cards) further apart along the
+  // edge axis since the wide cards eat into the rank gap visually.
+  const rankdir = mode === "mindmap" ? "LR" : "TB";
+  const ranksep = mode === "mindmap" ? 120 : 70;
+  g.setGraph({ rankdir, nodesep: 60, ranksep, marginx: 20, marginy: 20 });
   g.setDefaultEdgeLabel(() => ({}));
 
   for (const t of componentTasks) {
@@ -136,6 +158,8 @@ function layoutComponent(
 
   let minX = Number.POSITIVE_INFINITY;
   let maxX = Number.NEGATIVE_INFINITY;
+  let minY = Number.POSITIVE_INFINITY;
+  let maxY = Number.NEGATIVE_INFINITY;
   let sortKey: string | null = null;
 
   const nodes = componentTasks.map<LaidOutNode>((t) => {
@@ -144,6 +168,8 @@ function layoutComponent(
     const y = n.y - NODE_HEIGHT / 2;
     if (x < minX) minX = x;
     if (x + NODE_WIDTH > maxX) maxX = x + NODE_WIDTH;
+    if (y < minY) minY = y;
+    if (y + NODE_HEIGHT > maxY) maxY = y + NODE_HEIGHT;
     if (sortKey === null || t.id < sortKey) sortKey = t.id;
     return {
       id: t.id,
@@ -158,7 +184,7 @@ function layoutComponent(
   // so sortKey is always assigned.
   if (sortKey === null) throw new Error("layoutComponent: empty component");
 
-  return { nodes, minX, maxX, sortKey };
+  return { nodes, minX, maxX, minY, maxY, sortKey };
 }
 
 /**

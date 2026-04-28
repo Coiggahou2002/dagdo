@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- `dagdo ui` adds a layout-mode toggle in the top-right nav (between the "hide completed" checkbox and the theme button). New default is mindmap mode: the DAG flows left-to-right with edges entering on the left side of each node and exiting on the right (nodes themselves stay horizontal so titles remain readable), and disconnected components stack vertically alongside each other. The previous top-down tree layout is still available via the toggle. Preference persists in `localStorage` (`dagdo-layout-mode`); the view auto-fits after a switch and any user-dragged positions are dropped, since stale coordinates from the other orientation would otherwise pin nodes off-grid.
+
 ## [0.17.1] - 2026-04-28
 
 - Fix: `dagdo ui` — new tasks created while a named tab is active now belong to that tab. Previously they fell into the "All" view because `createTask` didn't pass any tab info, so the task lived outside every tab's `taskIds`. (#52)
