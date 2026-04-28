@@ -75,9 +75,11 @@ export function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hideCompleted, setHideCompleted] = useState(false);
   const [layoutMode, setLayoutModeState] = useState<LayoutMode>(() => {
-    if (typeof window === "undefined") return "tree";
+    if (typeof window === "undefined") return "mindmap";
     const stored = localStorage.getItem(LAYOUT_MODE_STORAGE_KEY);
-    return stored === "mindmap" ? "mindmap" : "tree";
+    // Preserve an explicit "tree" choice; everything else (unset, garbage,
+    // "mindmap") falls through to the new default.
+    return stored === "tree" ? "tree" : "mindmap";
   });
 
   const [activeTabId, setActiveTabId] = useState<string>(DEFAULT_TAB_ID);

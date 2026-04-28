@@ -32,16 +32,16 @@ interface ComponentLayout {
 }
 
 /**
- * Dagre layout per connected component. In `tree` mode (default) ranks flow
- * top-to-bottom and components pack horizontally; in `mindmap` mode ranks
- * flow left-to-right and components stack vertically. Component order is
+ * Dagre layout per connected component. In `mindmap` mode (default) ranks
+ * flow left-to-right and components stack vertically; in `tree` mode ranks
+ * flow top-to-bottom and components pack horizontally. Component order is
  * stable (size desc, then lex-smallest task id) so mutations inside one
  * component don't shuffle the others. See issue #20.
  */
 export function layoutGraph(
   tasks: Task[],
   edges: Edge[],
-  mode: LayoutMode = "tree",
+  mode: LayoutMode = "mindmap",
 ): LaidOutNode[] {
   if (tasks.length === 0) return [];
 
