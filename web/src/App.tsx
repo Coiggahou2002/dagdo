@@ -63,6 +63,7 @@ export function App() {
   const [nodes, setNodes] = useState<FlowNode<TaskNodeData>[]>([]);
   const [edges, setEdges] = useState<FlowEdge[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hideCompleted, setHideCompleted] = useState(false);
 
   const userPositioned = useRef(new Set<string>());
   const dragMovedRef = useRef(false);
@@ -127,15 +128,27 @@ export function App() {
     setSelectedId(null);
   }, []);
 
+  // ─── hide-completed filter ───────────────────────────────────────────
+  const displayedTasks = useMemo(
+    () => (hideCompleted ? graph.tasks.filter((t) => t.doneAt == null) : graph.tasks),
+    [hideCompleted, graph.tasks],
+  );
+
+  const displayedEdges = useMemo(() => {
+    if (!hideCompleted) return graph.edges;
+    const shownIds = new Set(displayedTasks.map((t) => t.id));
+    return graph.edges.filter((e) => shownIds.has(e.from) && shownIds.has(e.to));
+  }, [hideCompleted, displayedTasks, graph.edges]);
+
   // ─── reconcile Flow state whenever server state changes ──────────────
   useEffect(() => {
-    const autoLayout = layoutGraph(graph.tasks, graph.edges);
+    const autoLayout = layoutGraph(displayedTasks, displayedEdges);
     const autoById = new Map(autoLayout.map((n) => [n.id, n]));
 
     setNodes((current) => {
       const positionById = new Map(current.map((n) => [n.id, n.position]));
 
-      return graph.tasks.map<FlowNode<TaskNodeData>>((task) => {
+      return displayedTasks.map<FlowNode<TaskNodeData>>((task) => {
         const auto = autoById.get(task.id);
         const autoPos = auto ? { x: auto.x, y: auto.y } : { x: 0, y: 0 };
         const preserved = userPositioned.current.has(task.id) ? positionById.get(task.id) : undefined;
@@ -158,7 +171,7 @@ export function App() {
       });
     });
 
-    const aliveIds = new Set(graph.tasks.map((t) => t.id));
+    const aliveIds = new Set(displayedTasks.map((t) => t.id));
     for (const id of userPositioned.current) {
       if (!aliveIds.has(id)) userPositioned.current.delete(id);
     }
@@ -167,8 +180,8 @@ export function App() {
     }
 
     setEdges(
-      graph.edges.map<FlowEdge>((e) => {
-        const fromTask = graph.tasks.find((t) => t.id === e.from);
+      displayedEdges.map<FlowEdge>((e) => {
+        const fromTask = displayedTasks.find((t) => t.id === e.from);
         const dashed = fromTask?.doneAt != null;
         return {
           id: `${e.from}->${e.to}`,
@@ -179,7 +192,7 @@ export function App() {
         };
       }),
     );
-  }, [graph, handleRename, handlePatch, handleDelete, handleClosePopover, selectedId]);
+  }, [displayedTasks, displayedEdges, handleRename, handlePatch, handleDelete, handleClosePopover, selectedId]);
 
   // ─── React Flow event handlers ───────────────────────────────────────
   const onNodesChange = useCallback((changes: NodeChange[]) => {
@@ -473,7 +486,16 @@ export function App() {
         <span className="text-xs text-muted-foreground">
           {stats.total} tasks ({stats.done} done) · {graph.edges.length} edges
         </span>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={hideCompleted}
+              onChange={(e) => setHideCompleted(e.target.checked)}
+              className="h-3.5 w-3.5 cursor-pointer accent-primary"
+            />
+            隐藏已完成的节点
+          </label>
           <Button variant="ghost" size="icon" onClick={cycleTheme} aria-label="Toggle theme">
             {resolved === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
@@ -504,6 +526,10 @@ export function App() {
               <Plus className="h-4 w-4" />
               Add your first task
             </Button>
+          </div>
+        ) : displayedTasks.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+            All completed tasks are hidden.
           </div>
         ) : (
           <div className={`flex-1 h-full${isSpaceDown ? " dagdo-canvas is-space-down" : " dagdo-canvas"}`}>
