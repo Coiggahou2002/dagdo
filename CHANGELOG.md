@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-04-28
+
 - `dagdo ui` visual polish:
   - Edge contrast — both active solid and done dashed edges now blend `--muted-foreground` into the background at 45% / 35% so they share a tonal family. Active edges read as the load-bearing structure and done ones recede; previously the colors were swapped (dashed-done was darker than solid-active).
   - Ready-node accent — the "next to do" nodes (in-degree 0) used to fill with `bg-primary` (near-black in light mode) which clashed with the white blocked nodes around them. Now they share the white card background but get a 2px green border, a soft downward green shadow, a faint green inner tint, and dark-green text — visually emphatic without the harsh black-vs-white contrast.
