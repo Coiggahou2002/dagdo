@@ -18,6 +18,8 @@ import "@xyflow/react/dist/style.css";
 import { Toaster, toast } from "sonner";
 import { Sun, Moon, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { useTheme } from "@/components/theme-provider";
 import { layoutGraph } from "./layout";
 import {
@@ -487,15 +489,16 @@ export function App() {
           {stats.total} tasks ({stats.done} done) · {graph.edges.length} edges
         </span>
         <div className="ml-auto flex items-center gap-3">
-          <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none text-muted-foreground">
-            <input
-              type="checkbox"
+          <div className="flex items-center gap-1.5">
+            <Checkbox
+              id="hide-completed"
               checked={hideCompleted}
-              onChange={(e) => setHideCompleted(e.target.checked)}
-              className="h-3.5 w-3.5 cursor-pointer accent-primary"
+              onCheckedChange={(v) => setHideCompleted(v === true)}
             />
-            隐藏已完成的节点
-          </label>
+            <Label htmlFor="hide-completed" className="text-xs font-normal text-muted-foreground cursor-pointer">
+              隐藏已完成的节点
+            </Label>
+          </div>
           <Button variant="ghost" size="icon" onClick={cycleTheme} aria-label="Toggle theme">
             {resolved === "dark" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
           </Button>
