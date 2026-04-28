@@ -38,6 +38,25 @@ describe("addTask", () => {
     addTask(input, { title: "t1" });
     expect(input.tasks).toEqual([]);
   });
+
+  it("appends the new task id to the target tab when tabId is given", () => {
+    const input = makeData({
+      tabs: [
+        { id: "tabA", name: "A", taskIds: ["existing"] },
+        { id: "tabB", name: "B", taskIds: [] },
+      ],
+      tasks: [task("existing")],
+    });
+    const { data, task: created } = addTask(input, { title: "t1", tabId: "tabA" });
+    expect(data.tabs?.find((t) => t.id === "tabA")?.taskIds).toEqual(["existing", created.id]);
+    expect(data.tabs?.find((t) => t.id === "tabB")?.taskIds).toEqual([]);
+  });
+
+  it("ignores unknown tabId without throwing", () => {
+    const input = makeData({ tabs: [{ id: "tabA", name: "A", taskIds: [] }] });
+    const { data } = addTask(input, { title: "t1", tabId: "missing" });
+    expect(data.tabs?.[0]?.taskIds).toEqual([]);
+  });
 });
 
 describe("updateTask", () => {

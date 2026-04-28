@@ -50,7 +50,7 @@ async function jsonOrThrow<T>(res: Response): Promise<T> {
   throw new ApiError(kind, body.error ?? `HTTP ${res.status}`, body);
 }
 
-export async function createTask(args: { title: string }): Promise<Task> {
+export async function createTask(args: { title: string; tabId?: string }): Promise<Task> {
   const res = await fetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

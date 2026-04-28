@@ -408,7 +408,10 @@ export function App() {
   const handleDraftCommit = useCallback(
     async (draftId: number, position: { x: number; y: number }, title: string) => {
       try {
-        const task = await createTask({ title });
+        const task = await createTask({
+          title,
+          tabId: activeTabId === DEFAULT_TAB_ID ? undefined : activeTabId,
+        });
         userPositioned.current.add(task.id);
         setNodes((current) => {
           const idx = current.findIndex((n) => n.id === task.id);
@@ -448,7 +451,7 @@ export function App() {
         setDraft((cur) => (cur && cur.id === draftId ? null : cur));
       }
     },
-    [handleRename, handlePatch, handleDelete, handleClosePopover],
+    [activeTabId, tabs, handleRename, handlePatch, handleDelete, handleClosePopover, handleMoveTaskToTab],
   );
 
   const handleDraftCancel = useCallback((draftId: number) => {
@@ -510,12 +513,15 @@ export function App() {
     const trimmed = title.trim();
     if (trimmed.length === 0) return;
     try {
-      const task = await createTask({ title: trimmed });
+      const task = await createTask({
+        title: trimmed,
+        tabId: activeTabId === DEFAULT_TAB_ID ? undefined : activeTabId,
+      });
       toast.success(`Added "${task.title}"`);
     } catch (err) {
       toast.error(formatError("Add failed", err));
     }
-  }, []);
+  }, [activeTabId]);
 
   const stats = useMemo(() => {
     const done = graph.tasks.filter((t) => t.doneAt != null).length;
